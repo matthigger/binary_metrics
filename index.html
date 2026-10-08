@@ -66,17 +66,6 @@
         of the four cells: truth (row) by prediction (column). Every metric
         divides some of the cells by a row, a column or the whole
         table.</p>
-      <div class="formula legend-cm">
-        <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>
-          <th>Predict 1</th></tr></thead><tbody>
-          <tr><th>Truth 0</th><td class="cm-cell tn"><span
-            class="chip tn">TN</span></td><td class="cm-cell fp"><span
-            class="chip fp">FP</span></td></tr>
-          <tr><th>Truth 1</th><td class="cm-cell fn"><span
-            class="chip fn">FN</span></td><td class="cm-cell tp"><span
-            class="chip tp">TP</span></td></tr>
-        </tbody></table>
-      </div>
     </div>
     <div>
       <h3>Try this</h3>
@@ -102,38 +91,24 @@
     </div>
   </section>
 
-  <main class="panel" data-show="table">
-    <div class="left">
-      <div class="stage card">
-        <div class="stage-controls">
-          <div class="seg wrap" id="presets" role="radiogroup"
-            aria-label="Example"></div>
-          <div class="seg" id="t-view" role="radiogroup" aria-label="View">
-            <button data-view="table" role="radio">Table</button>
-            <button data-view="mosaic" role="radio">Mosaic</button>
-          </div>
-          <label class="check" id="toscale-row"><input type="checkbox"
-            id="toscale" checked> Rows to scale</label>
-          <button id="treset" title="Restore the example's counts">Reset
-            counts</button>
+  <main class="panel table-panel" data-show="table">
+    <div class="stage card">
+      <div class="stage-controls">
+        <div class="seg" id="t-view" role="radiogroup" aria-label="View">
+          <button data-view="table" role="radio">Table</button>
+          <button data-view="mosaic" role="radio">Mosaic</button>
         </div>
+        <label class="check" id="toscale-row"><input type="checkbox"
+          id="toscale" checked> Rows to scale</label>
+        <div class="seg wrap" id="presets" role="radiogroup"
+          aria-label="Example"></div>
+      </div>
+      <div class="view">
         <div id="cm-table" data-ctx="table"></div>
         <svg id="mosaic" data-ctx="table"
           aria-label="confusion matrix mosaic"></svg>
-        <p class="muted" id="t-source"></p>
       </div>
-
-      <div class="card story">
-        <div class="story-head">
-          <h3 id="story-count"></h3>
-          <div class="buttons">
-            <button id="story-back">&#9664; Back</button>
-            <button id="story-next">Next &#9654;</button>
-          </div>
-        </div>
-        <h2 id="story-title"></h2>
-        <div id="story-body"></div>
-      </div>
+      <p class="muted" id="t-source"></p>
     </div>
 
     <aside class="side">
@@ -142,6 +117,18 @@
         <div id="mlist" class="mlist" data-ctx="table"></div>
       </div>
     </aside>
+
+    <div class="card story">
+      <div class="story-head">
+        <h3 id="story-count"></h3>
+        <div class="buttons">
+          <button id="story-back">&#9664; Back</button>
+          <button id="story-next">Next &#9654;</button>
+        </div>
+      </div>
+      <h2 id="story-title"></h2>
+      <div id="story-body"></div>
+    </div>
   </main>
 
   <!-- =============================================== Summary metrics -->

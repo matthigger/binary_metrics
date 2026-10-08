@@ -187,7 +187,7 @@ function tHighlight() {
 // ------------------------------------------------------------------ build
 
 function tBuild() {
-  for (const id of ["presets", "toscale", "treset", "cm-table", "mosaic",
+  for (const id of ["presets", "toscale", "cm-table", "mosaic",
     "story-count", "story-title", "story-body", "story-back",
     "story-next", "mlist", "t-source", "t-view", "toscale-row"]) {
     tEls[id] = document.getElementById(id);
@@ -204,7 +204,6 @@ function tBuild() {
     T.toScale = tEls.toscale.checked;
     tDraw();
   };
-  tEls.treset.onclick = () => setPreset(T.preset);
   for (const b of tEls["t-view"].children) {
     b.onclick = () => {
       T.view = b.dataset.view;

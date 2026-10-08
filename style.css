@@ -212,7 +212,34 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .panel > * { min-width: 0; }
 
 .stage { padding: 12px 14px 8px; }
-.left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* The box and Every metric share a row, so they stretch to one height;
+   both views fill the same flexible area, so toggling keeps it. */
+.table-panel {
+  grid-template-areas: "stage side" "story .";
+  align-items: stretch;
+}
+.table-panel > .stage {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+}
+.table-panel > .side { grid-area: side; }
+.table-panel > .side > .card { flex: 1; }
+.table-panel > .story { grid-area: story; align-self: start; }
+.view {
+  flex: 1;
+  min-height: 360px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.view #mosaic {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 .story { padding: 16px 18px; }
 .stage-controls {
   display: flex;
@@ -222,6 +249,7 @@ main { padding-top: 14px; padding-bottom: 24px; }
   margin-bottom: 12px;
 }
 .stage-controls .seg:not(.wrap) button { padding: 3px 14px !important; }
+.stage-controls #presets { margin-left: auto; }
 .stage svg {
   display: block;
   width: 100%;
@@ -399,20 +427,13 @@ table.cm td.tot, table.cm tr.tot td {
 }
 table.cm.mini { border-spacing: 3px; margin: 0; }
 table.cm.mini td { padding: 3px 8px; font-weight: 600; }
-.legend-cm { padding: 6px; font-family: inherit; font-size: 1rem; }
-.legend-cm table.cm.mini { margin: 0 auto; }
 
-#mosaic {
-  max-width: 600px;
-  max-height: calc(100vh - 200px);
-  margin: 0 auto;
-}
-#mosaic .cell-name { font-size: 20px; }
-#mosaic .cell-count { font-size: 18px; }
-#mosaic .rl-head { font-size: 19px; }
-#mosaic .rl-noun { font-size: 16px; }
-#mosaic .rl-count { font-size: 15px; }
-#mosaic .axis-label { font-size: 16px; }
+#mosaic .cell-name { font-size: 25px; }
+#mosaic .cell-count { font-size: 22px; }
+#mosaic .rl-head { font-size: 22px; }
+#mosaic .rl-noun { font-size: 19px; }
+#mosaic .rl-count { font-size: 18px; }
+#mosaic .axis-label { font-size: 19px; }
 #mosaic .handle { cursor: grab; }
 #mosaic .handle.row { cursor: ns-resize; }
 #mosaic .handle.col { cursor: ew-resize; }
@@ -670,7 +691,7 @@ ol.derive {
 }
 @media (max-width: 1000px) {
   .panel, .intro { grid-template-columns: 1fr; }
-  #mosaic { max-height: none; }
+  .table-panel { grid-template-areas: "stage" "story" "side"; }
 }
 @media (max-width: 640px) {
   .curves, .options { grid-template-columns: 1fr; }
