@@ -212,8 +212,16 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .panel > * { min-width: 0; }
 
 .stage { padding: 12px 14px 8px; }
-/* The table tab's stage stays in view while the tour scrolls by. */
-.panel[data-show="table"] .stage { position: sticky; top: 12px; }
+.left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.story { padding: 16px 18px; }
+.stage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+.stage-controls .seg:not(.wrap) button { padding: 3px 14px !important; }
 .stage svg {
   display: block;
   width: 100%;
@@ -394,21 +402,17 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
 .legend-cm { padding: 6px; font-family: inherit; font-size: 1rem; }
 .legend-cm table.cm.mini { margin: 0 auto; }
 
-/* Table left, mosaic right; they stack on narrow screens. */
-.cm-wrap {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 14px;
+#mosaic {
+  max-width: 600px;
+  max-height: calc(100vh - 200px);
+  margin: 0 auto;
 }
-#mosaic { max-height: calc(100vh - 150px); }
-/* The mosaic renders at about half its viewBox width beside the table. */
-#mosaic .cell-name { font-size: 24px; }
-#mosaic .cell-count { font-size: 21px; }
-#mosaic .rl-head { font-size: 21px; }
-#mosaic .rl-noun { font-size: 18px; }
-#mosaic .rl-count { font-size: 17px; }
-#mosaic .axis-label { font-size: 18px; }
+#mosaic .cell-name { font-size: 20px; }
+#mosaic .cell-count { font-size: 18px; }
+#mosaic .rl-head { font-size: 19px; }
+#mosaic .rl-noun { font-size: 16px; }
+#mosaic .rl-count { font-size: 15px; }
+#mosaic .axis-label { font-size: 16px; }
 #mosaic .handle { cursor: grab; }
 #mosaic .handle.row { cursor: ns-resize; }
 #mosaic .handle.col { cursor: ew-resize; }
@@ -666,11 +670,7 @@ ol.derive {
 }
 @media (max-width: 1000px) {
   .panel, .intro { grid-template-columns: 1fr; }
-  .panel[data-show="table"] .stage { position: relative; top: 0; }
   #mosaic { max-height: none; }
-}
-@media (max-width: 820px) {
-  .cm-wrap { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .curves, .options { grid-template-columns: 1fr; }

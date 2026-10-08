@@ -118,7 +118,8 @@ const STEPS = [
     <p>The row ratios use one true class each, so they describe the test
       itself. The column ratios mix both rows, so they also depend on how
       common the condition is.</p>
-    <p><b>Drag the line between the rows</b>${T.toScale ? ""
+    <p><b>Drag the line between the rows</b>${T.view !== "mosaic"
+      ? " (switch to the Mosaic view first)" : T.toScale ? ""
       : " (turn on Rows to scale first)"}: prevalence changes, the row
       ratios stay put and the column ratios move.</p>
     <div class="compare">
@@ -151,6 +152,8 @@ const T = {
   hoverMetric: null,
   hoverCell: null,
   toScale: true,
+  // Which picture of the counts the box shows: "table" or "mosaic".
+  view: "table",
   drag: null,
 };
 
@@ -186,7 +189,7 @@ function tHighlight() {
 function tBuild() {
   for (const id of ["presets", "toscale", "treset", "cm-table", "mosaic",
     "story-count", "story-title", "story-body", "story-back",
-    "story-next", "mlist", "t-source"]) {
+    "story-next", "mlist", "t-source", "t-view", "toscale-row"]) {
     tEls[id] = document.getElementById(id);
   }
   for (const [key, p] of Object.entries(PRESETS)) {
@@ -202,6 +205,13 @@ function tBuild() {
     tDraw();
   };
   tEls.treset.onclick = () => setPreset(T.preset);
+  for (const b of tEls["t-view"].children) {
+    b.onclick = () => {
+      T.view = b.dataset.view;
+      T.hoverCell = null;
+      tDraw();
+    };
+  }
   tEls["story-back"].onclick = () => setStep(T.step - 1);
   tEls["story-next"].onclick = () => setStep(T.step + 1);
   buildTable();
@@ -307,6 +317,13 @@ function tDraw() {
     b.setAttribute("aria-checked", b.dataset.preset === T.preset);
   }
   tEls["t-source"].textContent = PRESETS[T.preset].source;
+  for (const b of tEls["t-view"].children) {
+    b.setAttribute("aria-checked", b.dataset.view === T.view);
+  }
+  const mosaic = T.view === "mosaic";
+  tEls["cm-table"].hidden = mosaic;
+  tEls.mosaic.style.display = mosaic ? "" : "none";
+  tEls["toscale-row"].hidden = !mosaic;
   drawTable(x);
   drawMosaicTab(x);
   drawStory(x);

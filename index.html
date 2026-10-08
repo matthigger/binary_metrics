@@ -84,8 +84,8 @@
         <li>Edit the counts in the table to change the prevalence: move
           samples from the Truth 0 row to the Truth 1 row. Which metrics
           move, and which stay put?</li>
-        <li>Drag the line between the rows of the mosaic. Which metrics
-          move, and which stay put?</li>
+        <li>In the Mosaic view, drag the line between the rows. Which
+          metrics move, and which stay put?</li>
         <li>On <em>Mammogram</em>, you can raise either TPR or TNR by one
           percentage point. Which would you rather raise to improve
           accuracy?
@@ -103,27 +103,24 @@
   </section>
 
   <main class="panel" data-show="table">
-    <div class="stage card">
-      <div class="cm-wrap">
+    <div class="left">
+      <div class="stage card">
+        <div class="stage-controls">
+          <div class="seg wrap" id="presets" role="radiogroup"
+            aria-label="Example"></div>
+          <div class="seg" id="t-view" role="radiogroup" aria-label="View">
+            <button data-view="table" role="radio">Table</button>
+            <button data-view="mosaic" role="radio">Mosaic</button>
+          </div>
+          <label class="check" id="toscale-row"><input type="checkbox"
+            id="toscale" checked> Rows to scale</label>
+          <button id="treset" title="Restore the example's counts">Reset
+            counts</button>
+        </div>
         <div id="cm-table" data-ctx="table"></div>
         <svg id="mosaic" data-ctx="table"
           aria-label="confusion matrix mosaic"></svg>
-      </div>
-      <p class="hint">Mosaic (right): each row is a true class (height
-        &prop; its count), split by the prediction, so area &prop; count.
-        Hatched cells are mistakes. Drag a line to move samples between
-        cells.</p>
-      <p class="muted" id="t-source"></p>
-    </div>
-
-    <aside class="side">
-      <div class="card controls">
-        <div class="field"><span>Example</span>
-          <div class="seg wrap" id="presets" role="radiogroup"></div></div>
-        <label class="check"><input type="checkbox" id="toscale" checked>
-          Rows to scale</label>
-        <div class="buttons"><button id="treset" title="Restore the
-          example's counts">Reset counts</button></div>
+        <p class="muted" id="t-source"></p>
       </div>
 
       <div class="card story">
@@ -137,12 +134,13 @@
         <h2 id="story-title"></h2>
         <div id="story-body"></div>
       </div>
+    </div>
 
+    <aside class="side">
       <div class="card">
         <h3>Every metric</h3>
         <div id="mlist" class="mlist" data-ctx="table"></div>
       </div>
-
     </aside>
   </main>
 
