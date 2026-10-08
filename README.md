@@ -19,10 +19,7 @@ threshold, is not). Three tabs:
   blue / estimated red on either side, or along the curve, and watch it
   trace the ROC curve. Sweep animates the threshold; Estimate backwards
   (Undo backwards) estimates red on the low-score side instead, leaving
-  the scores in place and mirroring the curve (AUC becomes 1 − AUC); AUC
-  as pairs shades the ROC square as one cell per (Truth 1, Truth 0) pair,
-  so the area under the staircase is the share of correctly ordered
-  pairs.
+  the scores in place and mirroring the curve (AUC becomes 1 − AUC).
 - **Would you rather?** A scenario (strep, spam, fraud, bots, defective
   screens), a goal (accuracy, cost, precision, recall, false alarms)
   and two classifiers each described by two clues in different terms.

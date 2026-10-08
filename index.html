@@ -174,14 +174,6 @@
             becomes 1 &minus; AUC. A classifier that is worse than guessing
             is still useful: estimate the opposite.</details>
         </li>
-        <li>Turn on <em>AUC as pairs</em> and hover the cells. Why is the
-          area under the staircase the share of correctly ordered pairs?
-          <details class="answer"><summary>Answer</summary>Each column is
-            one Truth 0 sample and each row one Truth 1 sample (both
-            sorted high to low), so each cell is one pair. A column's
-            height under the curve is the number of Truth 1 samples that
-            outscore that Truth 0 sample.</details>
-        </li>
         <li>Move the prior from 50% to 5%. Does the ROC curve change
           shape?
           <details class="answer"><summary>Answer</summary>Hardly: TPR and
@@ -205,7 +197,6 @@
       <p class="hint">Drag the threshold on the scores, or drag along the
         curve. The arrow keys move it one sample. Rest the pointer on a
         metric at right for what it means in plain English.</p>
-      <p class="muted" id="r-pair-note" hidden></p>
     </div>
 
     <aside class="side">
@@ -219,11 +210,6 @@
         <label class="slider"><span>Separation</span>
           <input type="range" id="r-sep">
           <span id="r-sepval" class="val"></span></label>
-        <label class="check" data-tip="Each cell of the ROC square is one
-          pair: one Truth 1 sample against one Truth 0 sample. Green when
-          the Truth 1 sample scores higher (ordered correctly), red when
-          not. The green share is the AUC."><input type="checkbox"
-          id="r-pairs"> AUC as pairs</label>
         <div class="buttons">
           <button id="r-sweep" title="Lower the threshold from above every
             score to below every score"></button>

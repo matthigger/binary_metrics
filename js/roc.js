@@ -22,11 +22,7 @@ const R = {
   back: false,
   seed: 1,
   thr: 0.4,
-  pairs: false,
   sweep: null,
-  // Hovered pair cell { i, j } (i-th highest effective Truth 1, j-th
-  // highest effective Truth 0) while showing AUC as pairs.
-  pair: null,
   drag: null,
 };
 
@@ -47,9 +43,6 @@ function dir() { return R.back ? -1 : 1; }
 
 /** Threshold in effective-score units. */
 function effThr() { return dir() * R.thr; }
-
-/** Index into rs of the i-th highest effective score of class c. */
-function rawIdx(c, i) { return R.back ? rs[c].length - 1 - i : i; }
 
 function rCounts() {
   const t = effThr();
@@ -106,9 +99,8 @@ function currentK() {
 
 function rBuild() {
   for (const id of ["strip", "rocplot", "r-n", "r-nval",
-    "r-prev", "r-prevval", "r-sep", "r-sepval", "r-pairs",
-    "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend",
-    "r-pair-note"]) {
+    "r-prev", "r-prevval", "r-sep", "r-sepval",
+    "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend"]) {
     rEls[id] = document.getElementById(id);
   }
   const slider = (id, key) => {
@@ -130,15 +122,9 @@ function rBuild() {
   slider("r-n", "n");
   slider("r-prev", "prev");
   slider("r-sep", "sep");
-  rEls["r-pairs"].onchange = () => {
-    R.pairs = rEls["r-pairs"].checked;
-    R.pair = null;
-    rDraw();
-  };
   rEls["r-sweep"].onclick = toggleSweep;
   rEls["r-flip"].onclick = () => {
     R.back = !R.back;
-    R.pair = null;
     rRegen();
     rDraw();
   };
@@ -149,7 +135,7 @@ function rBuild() {
     rDraw();
   };
   stripEvents();
-  plotEvents(rEls.rocplot, "roc");
+  plotEvents(rEls.rocplot);
   noise();
   rRegen();
 }
@@ -189,7 +175,6 @@ function rDraw() {
       (score ${lo} <i>t</i>)</span>
     <span class="key"><span class="swatch est1"></span>Estimated red
       (score ${hi} <i>t</i>)</span>`;
-  rEls["r-pair-note"].hidden = !R.pairs;
   const c = rCounts(), k = currentK();
   drawStrip(c);
   drawRoc(k);
@@ -268,16 +253,6 @@ function drawStrip(c) {
         svg);
     });
   }
-  if (R.pair) {
-    const a = pos[1][rawIdx(1, R.pair.i)], b = pos[0][rawIdx(0, R.pair.j)];
-    node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "pair-link" },
-      svg);
-    for (const p of [a, b]) {
-      node("circle", { cx: p.x, cy: p.y, r: p.r + 4, class: "pair-ring" },
-        svg);
-    }
-  }
-
   const g = node("g", { class: "thr" }, svg);
   node("line", { x1: tx, x2: tx, y1: 22, y2: S.bands[1].y1 + 4,
     class: "thr-line" }, g);
@@ -332,36 +307,10 @@ function pathOf(pts) {
 }
 
 function drawRoc(k) {
-  const svg = rEls.rocplot, Q = rs[0].length, P = rs[1].length;
+  const svg = rEls.rocplot;
   plotFrame(svg, "FPR (false alarm rate)", "TPR (recall)");
-  if (R.pairs) {
-    // Column j is the j-th highest Truth 0; its cells under the curve are
-    // the Truth 1 samples scoring above it: correctly ordered pairs.
-    const w = (PLOT.x1 - PLOT.x0) / Q, h = (PLOT.y1 - PLOT.y0) / P;
-    above.forEach((a, j) => {
-      node("rect", { x: px(j / Q), y: py(a / P), width: w + 0.3,
-        height: a * h, class: "pair-ok" }, svg);
-      node("rect", { x: px(j / Q), y: PLOT.y0, width: w + 0.3,
-        height: (P - a) * h, class: "pair-bad" }, svg);
-    });
-    if (P <= 60 && Q <= 60) {
-      for (let j = 1; j < Q; j++) {
-        node("line", { x1: px(j / Q), x2: px(j / Q), y1: PLOT.y0,
-          y2: PLOT.y1, class: "pair-grid" }, svg);
-      }
-      for (let i = 1; i < P; i++) {
-        node("line", { x1: PLOT.x0, x2: PLOT.x1, y1: py(i / P),
-          y2: py(i / P), class: "pair-grid" }, svg);
-      }
-    }
-    if (R.pair) {
-      node("rect", { x: px(R.pair.j / Q), y: py((R.pair.i + 1) / P),
-        width: w, height: h, class: "pair-cell" }, svg);
-    }
-  } else {
-    node("path", { d: pathOf(verts) + `L${px(1)} ${py(0)}Z`,
-      class: "auc-fill" }, svg);
-  }
+  node("path", { d: pathOf(verts) + `L${px(1)} ${py(0)}Z`,
+    class: "auc-fill" }, svg);
   node("rect", { x: PLOT.x0, y: PLOT.y0, width: PLOT.x1 - PLOT.x0,
     height: PLOT.y1 - PLOT.y0, class: "frame" }, svg);
   node("line", { x1: px(0), y1: py(0), x2: px(1), y2: py(1),
@@ -378,8 +327,7 @@ function drawRoc(k) {
 }
 
 function rReadout(c, k) {
-  const m = allMetrics(c), P = rs[1].length, Q = rs[0].length;
-  const good = Math.round(auc * P * Q);
+  const m = allMetrics(c);
   const row = (a, b, key) => `<div class="row" data-explain="${key}">`
     + `<span>${a}</span><span class="val">${b}</span></div>`;
   rEls["r-readout"].innerHTML = `
@@ -399,9 +347,6 @@ function rReadout(c, k) {
     ${row("Accuracy", pct(m.acc), "acc")}
     <h3>Over every threshold</h3>
     ${row("AUC", auc.toFixed(3), "auc")}
-    <p class="muted">${num(good)} of the ${num(P * Q)} (Truth 1, Truth 0)
-      pairs are ordered correctly: the Truth 1 sample scores higher.
-      AUC = ${num(good)} / ${num(P * Q)}.</p>
     ${verts[k][1] < verts[k][0] ? `<p class="warn">This point is below the
       diagonal: worse than guessing. Predicting the opposite would land at
       (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try ${R.back
@@ -444,7 +389,7 @@ function nearestK(p) {
   return best;
 }
 
-function plotEvents(svg, kind) {
+function plotEvents(svg) {
   const move = e => {
     R.thr = thrForK(nearestK(svgPoint(svg, e)));
     rDraw();
@@ -453,51 +398,15 @@ function plotEvents(svg, kind) {
     e.preventDefault();
     stopSweep();
     svg.setPointerCapture(e.pointerId);
-    R.drag = kind;
+    R.drag = "roc";
     move(e);
   });
   svg.addEventListener("pointermove", e => {
-    if (R.drag === kind) {
-      move(e);
-      return;
-    }
-    if (kind !== "roc" || !R.pairs) return;
-    const p = svgPoint(svg, e), Q = rs[0].length, P = rs[1].length;
-    const fx = (p.x - PLOT.x0) / (PLOT.x1 - PLOT.x0);
-    const fy = (PLOT.y1 - p.y) / (PLOT.y1 - PLOT.y0);
-    const pair = fx >= 0 && fx < 1 && fy >= 0 && fy < 1
-      ? { j: Math.floor(fx * Q), i: Math.floor(fy * P) } : null;
-    if (JSON.stringify(pair) !== JSON.stringify(R.pair)) {
-      R.pair = pair;
-      rDraw();
-      showPair();
-    }
+    if (R.drag === "roc") move(e);
   });
   const end = () => { R.drag = null; };
   svg.addEventListener("pointerup", end);
   svg.addEventListener("pointercancel", end);
-  svg.addEventListener("pointerleave", () => {
-    if (R.pair) {
-      R.pair = null;
-      rDraw();
-      showPair();
-    }
-  });
-}
-
-function showPair() {
-  const el = rEls["r-pair-note"];
-  if (!R.pair) {
-    el.innerHTML = "Hover a cell of the ROC plot: each is one (Truth 1, "
-      + "Truth 0) pair, ringed on the strip.";
-    return;
-  }
-  const a = rs[1][rawIdx(1, R.pair.i)], b = rs[0][rawIdx(0, R.pair.j)];
-  const ok = dir() * a > dir() * b;
-  el.innerHTML = `This pair: Truth 1 scores ${fmt(a)}, Truth 0 scores
-    ${fmt(b)}. ${ok ? "Ordered correctly: the cell is under the curve."
-    : "Ordered wrong: the cell is above the curve."}${R.back ? " (Backwards,"
-    + " a lower score counts as more red.)" : ""}`;
 }
 
 function toggleSweep() {
