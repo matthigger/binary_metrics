@@ -25,7 +25,13 @@ ratio of counts from the 2 × 2 confusion matrix. Three tabs:
   screens), a goal (accuracy, cost, precision, recall, false alarms)
   and two classifiers each described by two clues in different terms.
   Rounds are kept only when the clues, as rounded on screen, settle the
-  goal. The reveal shows both matrices and how to derive them.
+  goal. Show the data draws each classifier's confusion matrix and mosaic
+  before the pick (hovering a clue lights up its cells); the reveal adds
+  how to derive them from the clues.
+
+Resting the pointer on a metric, clue or cell anywhere shows a plain-English
+sentence with natural frequencies ("of every 100 children with strep, the
+rapid strep test catches about 86").
 
 Plain HTML/CSS/JS with SVG: no build step and no dependencies.
 

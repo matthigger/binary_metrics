@@ -51,6 +51,8 @@ function pct(x) {
   return `${p.toFixed(1)}%`;
 }
 
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
 /** Count with a thousands separator. */
 function num(n) { return n.toLocaleString("en-US"); }
 

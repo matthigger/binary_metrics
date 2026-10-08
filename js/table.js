@@ -156,9 +156,9 @@ const T = {
 
 const tEls = {};
 
-function cap(s) { return s[0].toUpperCase() + s.slice(1); }
-
 function nouns() { return PRESETS[T.preset].nouns; }
+
+EXPLAIN.table = () => ({ c: T.counts, n: nouns(), who: nouns().test });
 
 function tCtx() {
   const c = T.counts;
@@ -250,7 +250,8 @@ function buildList() {
     if (!ms.length) continue;
     html += `<h4>${g.title}</h4>`;
     for (const m of ms) {
-      html += `<div class="mrow" data-key="${m.key}">
+      html += `<div class="mrow" data-key="${m.key}"
+        data-explain="${m.key}">
         <span class="mname">${m.name}${m.aka
           ? `<span class="aka">${m.aka}</span>` : ""}</span>
         <span class="mdef">${defHTML(m.key)}</span>

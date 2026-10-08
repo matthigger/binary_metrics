@@ -611,7 +611,28 @@ button:disabled { opacity: .4; cursor: default; }
   font-size: 1.15rem;
   font-variant-numeric: tabular-nums;
 }
-.cplain { grid-column: 1 / -1; color: var(--muted); font-size: .9rem; }
+.clue .cname, .mrow .mname, .readout .row[data-explain] > span:first-child {
+  text-decoration: underline dotted #a3abb9;
+  text-underline-offset: 3px;
+}
+[data-explain], [data-cell] { cursor: help; }
+.mrow[data-explain]:not(.cheat) { cursor: pointer; }
+.opt-data { margin: 8px 0 4px; }
+.opt-data table.cm.mini { margin: 6px auto 0; }
+
+#tip {
+  position: fixed;
+  z-index: 50;
+  max-width: 300px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: #fff;
+  font-size: .9rem;
+  line-height: 1.4;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, .25);
+}
 button.choose {
   margin-top: auto;
   align-self: stretch;
@@ -622,7 +643,6 @@ button.choose {
 .reveal { margin-top: 8px; }
 .mini-mosaic { width: 100%; max-width: 260px; display: block; margin: 0 auto; }
 .mini-mosaic .cell-name { font-size: 14px; }
-.reveal table.cm.mini { margin: 6px auto; }
 ol.derive {
   padding-left: 1.2em;
   margin: 6px 0;

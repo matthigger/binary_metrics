@@ -66,28 +66,17 @@ const GOALS = {
 // split, F: the Truth 0 row split, PP / NP: the predicted columns, A:
 // accuracy, Q: number flagged).
 const CLUES = {
-  tpr: { fam: "R", name: "Recall (TPR, sensitivity)", rate: "tpr",
-    plain: (v, s) => `catches ${v} of the ${s.pos}` },
-  fnr: { fam: "R", name: "Miss rate (FNR)", rate: "fnr",
-    plain: (v, s) => `misses ${v} of the ${s.pos}` },
-  fn: { fam: "R", name: "False negatives (FN)", count: "fn",
-    plain: (v, s, N) => `misses ${v} ${s.pos} per ${num(N)} ${s.pop}` },
-  tnr: { fam: "F", name: "Specificity (TNR)", rate: "tnr",
-    plain: (v, s) => `correctly clears ${v} of the ${s.neg}` },
-  fpr: { fam: "F", name: "False alarm rate (FPR)", rate: "fpr",
-    plain: (v, s) => `wrongly flags ${v} of the ${s.neg}` },
-  fp: { fam: "F", name: "False positives (FP)", count: "fp",
-    plain: (v, s, N) => `raises ${v} false alarms per ${num(N)} ${s.pop}` },
-  ppv: { fam: "PP", name: "Precision (PPV)", rate: "ppv",
-    plain: (v, s) => `${v} of what it flags really are ${s.pos}` },
-  fdr: { fam: "PP", name: "False discovery rate (FDR)", rate: "fdr",
-    plain: v => `${v} of what it flags are false alarms` },
-  npv: { fam: "NP", name: "NPV", rate: "npv",
-    plain: (v, s) => `${v} of what it clears really are ${s.neg}` },
-  acc: { fam: "A", name: "Accuracy", rate: "acc",
-    plain: (v, s) => `right about ${v} of all ${s.pop}` },
-  flag: { fam: "Q", name: "Flagged (TP + FP)", count: "flag",
-    plain: (v, s, N) => `flags ${v} of every ${num(N)} ${s.pop}` },
+  tpr: { fam: "R", name: "Recall (TPR, sensitivity)", rate: "tpr" },
+  fnr: { fam: "R", name: "Miss rate (FNR)", rate: "fnr" },
+  fn: { fam: "R", name: "False negatives (FN)", count: "fn" },
+  tnr: { fam: "F", name: "Specificity (TNR)", rate: "tnr" },
+  fpr: { fam: "F", name: "False alarm rate (FPR)", rate: "fpr" },
+  fp: { fam: "F", name: "False positives (FP)", count: "fp" },
+  ppv: { fam: "PP", name: "Precision (PPV)", rate: "ppv" },
+  fdr: { fam: "PP", name: "False discovery rate (FDR)", rate: "fdr" },
+  npv: { fam: "NP", name: "NPV", rate: "npv" },
+  acc: { fam: "A", name: "Accuracy", rate: "acc" },
+  flag: { fam: "Q", name: "Flagged (TP + FP)", count: "flag" },
 };
 const POPULAR_CLUES = ["tpr", "fn", "fpr", "fp", "ppv", "acc", "flag"];
 
@@ -95,7 +84,34 @@ const POPULAR_CLUES = ["tpr", "fn", "fpr", "fp", "ppv", "acc", "flag"];
 const EXCLUDE = { acc: ["acc"], ppv: ["ppv", "fdr"],
   tpr: ["tpr", "fnr", "fn"], fpr: ["fpr", "tnr", "fp"], cost: [] };
 
-const G = { round: null, right: 0, played: 0, streak: 0, hint: false };
+// show: draw each option's confusion matrix and mosaic before the pick;
+// hl: the clue under the pointer { i, type }, lit up in that option's data.
+const G = { round: null, right: 0, played: 0, streak: 0, show: false,
+  hl: null };
+
+function gNouns() {
+  const s = G.round.s;
+  return { pop: s.pop, pos: s.pos, neg: s.neg };
+}
+EXPLAIN.game0 = () => ({ c: G.round.opts[0].c, n: gNouns(),
+  who: "classifier A" });
+EXPLAIN.game1 = () => ({ c: G.round.opts[1].c, n: gNouns(),
+  who: "classifier B" });
+EXPLAIN.cheat = () => ({ n: gNouns(), who: "the classifier" });
+
+/** Cells a clue reads: a metric's fraction, or the counted cells. */
+function clueHL(type) {
+  const k = CLUES[type];
+  if (k.count === "flag") return { num: ["fp", "tp"], den: [] };
+  if (k.count) return { num: [k.count], den: [] };
+  return highlightOf(k.rate);
+}
+
+/** Key the hover sentence explains for a clue. */
+function clueKey(type) {
+  const k = CLUES[type];
+  return k.rate || k.count;
+}
 const gEls = {};
 const gr = rng(Date.now() % 1e9);
 
@@ -274,12 +290,12 @@ function rowLine(t, c, rd) {
 
 function gBuild() {
   for (const id of ["g-scene", "g-opts", "g-verdict", "g-score",
-    "g-next", "g-hint", "g-cheat"]) {
+    "g-next", "g-show", "g-cheat"]) {
     gEls[id] = document.getElementById(id);
   }
   gEls["g-next"].onclick = newRound;
-  gEls["g-hint"].onclick = () => {
-    G.hint = !G.hint;
+  gEls["g-show"].onchange = () => {
+    G.show = gEls["g-show"].checked;
     gDraw();
   };
   gCheat();
@@ -288,14 +304,14 @@ function gBuild() {
 
 function gCheat() {
   gEls["g-cheat"].innerHTML = shownMetrics().map(m => `<div class="mrow
-    cheat"><span class="mname">${m.name}${m.aka
+    cheat" data-explain="${m.key}"><span class="mname">${m.name}${m.aka
       ? `<span class="aka">${m.aka}</span>` : ""}</span>
     <span class="mdef">${defHTML(m.key)}</span></div>`).join("");
 }
 
 function newRound() {
   G.round = makeRound();
-  G.hint = false;
+  G.hl = null;
   gDraw();
 }
 
@@ -322,8 +338,6 @@ function gDraw() {
     <p class="goal"><b>Goal:</b> ${GOALS[rd.goal].text(s)}</p>
     <p class="wyr">Would you rather use&hellip;</p>`;
   gEls["g-opts"].replaceChildren(...rd.opts.map((o, i) => optionCard(o, i)));
-  gEls["g-hint"].textContent = G.hint ? "Hide hint" : "Hint";
-  gEls["g-hint"].disabled = done;
   let verdict = "";
   if (done) {
     const ok = rd.picked === rd.win, w = "AB"[rd.win];
@@ -331,11 +345,6 @@ function gDraw() {
       + "time."} Classifier ${w} wins: ${GOALS[rd.goal].show(
       rd.opts[rd.win].c, s)}, against ${GOALS[rd.goal].show(
       rd.opts[1 - rd.win].c, s)}.</p>`;
-  } else if (G.hint) {
-    verdict = `<p class="muted">Hint: start from the rows. Each classifier
-      has one clue about a row (out of the ${num(rd.P)} ${s.pos} or the
-      ${num(rd.Q)} ${s.neg}), which fills in one cell and its row partner.
-      The second clue fills in the other row.</p>`;
   }
   gEls["g-verdict"].innerHTML = verdict;
   gEls["g-score"].innerHTML = `
@@ -350,12 +359,25 @@ function optionCard(o, i) {
   const card = document.createElement("div");
   card.className = "option card" + (done ? (i === rd.win ? " win" : " lose")
     : "") + (rd.picked === i ? " picked" : "");
-  const clues = o.clues.map(t => `<div class="clue">
-    <span class="cname">${CLUES[t].name}</span>
-    <span class="cval">${clueText(t, o.c)}</span>
-    <span class="cplain">${CLUES[t].plain(clueText(t, o.c), s, rd.N)}</span>
-    </div>`).join("");
-  card.innerHTML = `<h3>Classifier ${"AB"[i]}</h3>${clues}`;
+  card.dataset.ctx = `game${i}`;
+  card.innerHTML = `<h3>Classifier ${"AB"[i]}</h3>` + o.clues.map(t => `
+    <div class="clue" data-type="${t}" data-explain="${clueKey(t)}">
+      <span class="cname">${CLUES[t].name}</span>
+      <span class="cval">${clueText(t, o.c)}</span></div>`).join("");
+  const data = document.createElement("div");
+  data.className = "opt-data";
+  card.append(data);
+  drawOptData(data, o, i);
+  for (const el of card.querySelectorAll(".clue")) {
+    el.onmouseenter = () => {
+      G.hl = { i, type: el.dataset.type };
+      drawOptData(data, o, i);
+    };
+    el.onmouseleave = () => {
+      G.hl = null;
+      drawOptData(data, o, i);
+    };
+  }
   if (!done) {
     const b = document.createElement("button");
     b.className = "choose";
@@ -366,22 +388,32 @@ function optionCard(o, i) {
   }
   const rev = document.createElement("div");
   rev.className = "reveal";
-  const svg = node("svg", { viewBox: "0 0 220 150", class: "mini-mosaic" });
-  drawMosaic(svg, o.c, { x0: 4, x1: 216, y0: 4, y1: 146 },
-    { toScale: false, labels: true });
-  const c = o.c;
-  rev.innerHTML = `<table class="cm mini"><tbody>
-      <tr><td class="cm-cell tn">${chip("tn")} ${num(c.tn)}</td>
-        <td class="cm-cell fp">${chip("fp")} ${num(c.fp)}</td></tr>
-      <tr><td class="cm-cell fn">${chip("fn")} ${num(c.fn)}</td>
-        <td class="cm-cell tp">${chip("tp")} ${num(c.tp)}</td></tr>
-    </tbody></table>
-    <ol class="derive">${deriveHTML(o, rd).map(l => `<li>${l}</li>`).join("")}
-    </ol>
-    <p class="goalval">${GOALS[rd.goal].show(c, s)}</p>`;
-  rev.prepend(svg);
+  rev.innerHTML = `<ol class="derive">${deriveHTML(o, rd)
+    .map(l => `<li>${l}</li>`).join("")}</ol>
+    <p class="goalval">${GOALS[rd.goal].show(o.c, s)}</p>`;
   card.append(rev);
   return card;
+}
+
+/**
+ * The option's confusion matrix and mosaic, shown once picked or while
+ * Show the data is on; the hovered clue's cells are highlighted.
+ */
+function drawOptData(el, o, i) {
+  const rd = G.round;
+  el.replaceChildren();
+  if (rd.picked === null && !G.show) return;
+  const hl = G.hl && G.hl.i === i ? clueHL(G.hl.type) : null;
+  const svg = node("svg", { viewBox: "0 0 220 150", class: "mini-mosaic" },
+    el);
+  drawMosaic(svg, o.c, { x0: 4, x1: 216, y0: 4, y1: 146 },
+    { toScale: false, labels: true, hl });
+  const td = k => `<td class="cm-cell ${k} ${cellState(k, hl)}"
+    data-cell="${k}">${chip(k)} ${num(o.c[k])}</td>`;
+  el.insertAdjacentHTML("beforeend", `<table class="cm mini"><thead><tr>
+    <th></th><th>Predict 0</th><th>Predict 1</th></tr></thead><tbody>
+    <tr><th>Truth 0</th>${td("tn")}${td("fp")}</tr>
+    <tr><th>Truth 1</th>${td("fn")}${td("tp")}</tr></tbody></table>`);
 }
 
 function gKey(e) {

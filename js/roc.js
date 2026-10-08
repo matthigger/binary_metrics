@@ -37,6 +37,11 @@ const R = {
 // highest Truth 0; and the AUC.
 let rz, rs, order, verts, above, auc;
 const rEls = {};
+const ROC_NOUNS = { pop: "samples", pos: "Truth 1 samples",
+  neg: "Truth 0 samples", has1: "are Truth 1", has0: "are Truth 0" };
+
+EXPLAIN.roc = () => ({ c: rCounts(), n: ROC_NOUNS, who: "the classifier",
+  auc });
 
 function rCounts() {
   const tp = rs[1].filter(v => v >= R.thr).length;
@@ -378,23 +383,25 @@ function drawPr(k) {
 function rReadout(c, k) {
   const m = allMetrics(c), P = rs[1].length, Q = rs[0].length;
   const good = Math.round(auc * P * Q);
-  const row = (a, b) => `<div class="row"><span>${a}</span>`
-    + `<span class="val">${b}</span></div>`;
+  const row = (a, b, key) => `<div class="row" data-explain="${key}">`
+    + `<span>${a}</span><span class="val">${b}</span></div>`;
   rEls["r-readout"].innerHTML = `
     <h3>At threshold <i>t</i> = ${fmt(R.thr, 2)}</h3>
     <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>
       <th>Predict 1</th></tr></thead><tbody>
-      <tr><th>Truth 0</th><td class="cm-cell tn">${chip("tn")} ${c.tn}</td>
-        <td class="cm-cell fp">${chip("fp")} ${c.fp}</td></tr>
-      <tr><th>Truth 1</th><td class="cm-cell fn">${chip("fn")} ${c.fn}</td>
-        <td class="cm-cell tp">${chip("tp")} ${c.tp}</td></tr>
+      <tr><th>Truth 0</th><td class="cm-cell tn" data-cell="tn">${
+        chip("tn")} ${c.tn}</td>
+        <td class="cm-cell fp" data-cell="fp">${chip("fp")} ${c.fp}</td></tr>
+      <tr><th>Truth 1</th><td class="cm-cell fn" data-cell="fn">${
+        chip("fn")} ${c.fn}</td>
+        <td class="cm-cell tp" data-cell="tp">${chip("tp")} ${c.tp}</td></tr>
     </tbody></table>
-    ${row("TPR (recall)", pct(m.tpr))}
-    ${row("FPR", pct(m.fpr))}
-    ${row("Precision", pct(m.ppv))}
-    ${row("Accuracy", pct(m.acc))}
+    ${row("TPR (recall)", pct(m.tpr), "tpr")}
+    ${row("FPR", pct(m.fpr), "fpr")}
+    ${row("Precision", pct(m.ppv), "ppv")}
+    ${row("Accuracy", pct(m.acc), "acc")}
     <h3>Over every threshold</h3>
-    ${row("AUC", auc.toFixed(3))}
+    ${row("AUC", auc.toFixed(3), "auc")}
     <p class="muted">${num(good)} of the ${num(P * Q)} (Truth 1, Truth 0)
       pairs are ordered correctly: the Truth 1 sample scores higher.
       AUC = ${num(good)} / ${num(P * Q)}.</p>

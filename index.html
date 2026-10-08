@@ -80,8 +80,9 @@
       <p class="muted">Edit any count in the table, or drag the lines in
         the mosaic (the total stays fixed). Hover a metric to light up its
         numerator (filled) and denominator (outlined); hover a cell to see
-        which metrics use it. Step through the tour with <em>Next</em> or
-        the arrow keys.</p>
+        which metrics use it. Rest the pointer on a metric or a cell for
+        what it means in plain English. Step through the tour with
+        <em>Next</em> or the arrow keys.</p>
     </div>
     <div>
       <h3>Try this</h3>
@@ -117,8 +118,9 @@
   <main class="panel" data-show="table">
     <div class="stage card">
       <div class="cm-wrap">
-        <div id="cm-table"></div>
-        <svg id="mosaic" aria-label="confusion matrix mosaic"></svg>
+        <div id="cm-table" data-ctx="table"></div>
+        <svg id="mosaic" data-ctx="table"
+          aria-label="confusion matrix mosaic"></svg>
       </div>
       <p class="hint">Mosaic (right): each row is a true class (height
         &prop; its count), split by the prediction, so area &prop; count.
@@ -151,7 +153,7 @@
 
       <div class="card">
         <h3>Every metric</h3>
-        <div id="mlist" class="mlist"></div>
+        <div id="mlist" class="mlist" data-ctx="table"></div>
       </div>
 
     </aside>
@@ -248,7 +250,8 @@
         <svg id="prplot" aria-label="precision-recall curve"></svg>
       </div>
       <p class="hint">Drag the threshold on the scores, or drag along
-        either curve. The arrow keys move it one sample.</p>
+        either curve. The arrow keys move it one sample. Rest the pointer on
+        a metric at right for what it means in plain English.</p>
       <p class="muted" id="r-pair-note" hidden></p>
     </div>
 
@@ -274,10 +277,10 @@
             Resample</button>
         </div>
       </div>
-      <div class="card readout" id="r-readout"></div>
-      <div class="card">
+      <div class="card readout" id="r-readout" data-ctx="roc"></div>
+      <div class="card" data-ctx="roc">
         <h3>F1 = Dice: the overlap of two sets</h3>
-        <div id="r-f1"></div>
+        <div id="r-f1" data-explain="f1"></div>
         <svg id="r-venn" aria-label="Venn diagram of the true and predicted
           positives at this threshold"></svg>
         <p class="muted" id="r-venn-note"></p>
@@ -295,8 +298,9 @@
         counts. N and the prevalence give the row totals; each clue fills
         in more of the matrix. Then compute what the goal asks for.</p>
       <p class="muted">Two clues plus the prevalence pin down the whole
-        confusion matrix. Keys: <b>a</b> or <b>b</b> to choose,
-        <b>Enter</b> for the next round.</p>
+        confusion matrix. Rest the pointer on a clue for what it means in
+        plain English. Keys: <b>a</b> or <b>b</b> to choose, <b>Enter</b>
+        for the next round.</p>
     </div>
     <div>
       <h3>Try this</h3>
@@ -307,8 +311,8 @@
           nothing about how many positives are caught.</li>
         <li>For a cost goal, compute (cost of a miss) &times; FN + (cost of
           a false alarm) &times; FP for each.</li>
-        <li>When the condition is rare, compare accuracy with F1. Which
-          one did the goal ask for?</li>
+        <li>When the condition is rare, compare accuracy with precision.
+          Which one did the goal ask for?</li>
       </ul>
     </div>
   </section>
@@ -324,14 +328,19 @@
       <div class="card readout">
         <h3>Score</h3>
         <div id="g-score"></div>
+        <label class="check" title="Each classifier's confusion matrix and
+          mosaic, before you choose"><input type="checkbox" id="g-show">
+          Show the data</label>
+        <p class="muted">Shows each classifier's confusion matrix and mosaic
+          (it gives the answer away); hovering a clue lights up its
+          cells.</p>
         <div class="buttons">
-          <button id="g-hint"></button>
           <button id="g-next">Next round &#9654;</button>
         </div>
       </div>
       <div class="card">
         <h3>Cheat sheet</h3>
-        <div id="g-cheat" class="mlist"></div>
+        <div id="g-cheat" class="mlist" data-ctx="cheat"></div>
       </div>
     </aside>
   </main>
@@ -346,6 +355,7 @@
   <script src="js/version.js"></script>
   <script src="js/util.js"></script>
   <script src="js/metrics.js"></script>
+  <script src="js/explain.js"></script>
   <script src="js/mosaic.js"></script>
   <script src="js/venn.js"></script>
   <script src="js/table.js"></script>
