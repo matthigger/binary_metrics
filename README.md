@@ -13,15 +13,16 @@ threshold, is not). Three tabs:
   default) limits this tab and the game to prior, accuracy, TPR, FPR
   and precision; off, it adds FNR, TNR, FDR, NPV, FOR and balanced
   accuracy.
-- **Summary metrics.** AUC and F1. Scores of each class are drawn from two
-  normals (separation, prior and sample count are sliders). Drag the
-  threshold on the score strip, or along either curve, and watch it move
-  along the ROC and precision-recall curves; a Venn diagram shows F1 as
-  the Dice overlap of the true and predicted positives at that threshold.
-  Sweep animates the threshold; Estimate backwards (Undo backwards)
-  mirrors a worse-than-guessing classifier; AUC as pairs shades the ROC
-  square as one cell per (Truth 1, Truth 0) pair, so the area under the
-  staircase is the share of correctly ordered pairs.
+- **ROC curve.** One number that needs no threshold: AUC. Scores of each
+  class are drawn from two normals (separation, prior and sample count
+  are sliders). Drag the threshold on the score strip, shaded estimated
+  blue / estimated red on either side, or along the curve, and watch it
+  trace the ROC curve. Sweep animates the threshold; Estimate backwards
+  (Undo backwards) estimates red on the low-score side instead, leaving
+  the scores in place and mirroring the curve (AUC becomes 1 − AUC); AUC
+  as pairs shades the ROC square as one cell per (Truth 1, Truth 0) pair,
+  so the area under the staircase is the share of correctly ordered
+  pairs.
 - **Would you rather?** A scenario (strep, spam, fraud, bots, defective
   screens), a goal (accuracy, cost, precision, recall, false alarms)
   and two classifiers each described by two clues in different terms.
@@ -44,5 +45,5 @@ Open `index.html` in a browser, or serve it:
 python3 -m http.server 8000   # then visit http://localhost:8000
 ```
 
-Link straight to a tab with `#confusion-matrix`, `#summary-metrics` or
+Link straight to a tab with `#confusion-matrix`, `#roc` or
 `#would-you-rather`.

@@ -6,8 +6,7 @@
 //   Truth 1       FN          TP
 //
 // Counts are an object { tn, fp, fn, tp }. Each ratio metric divides the
-// sum of its num cells by the sum of its den cells; a cell listed twice
-// counts twice (F1's 2 TP).
+// sum of its num cells by the sum of its den cells.
 
 const CELLS = ["tn", "fp", "fn", "tp"];
 const CELL_LABEL = { tn: "TN", fp: "FP", fn: "FN", tp: "TP" };
@@ -42,23 +41,19 @@ const METRICS = [
     aka: "negative predictive value", num: ["tn"], den: ["tn", "fn"] },
   { key: "for", group: "p0", name: "FOR", aka: "false omission rate",
     num: ["fn"], den: ["tn", "fn"] },
-  { key: "f1", group: "summary", name: "F1", aka: "Dice",
-    num: ["tp", "tp"], den: ["tp", "tp", "fp", "fn"] },
   { key: "bacc", group: "avg", name: "Balanced accuracy", aka: "",
     avg: ["tpr", "tnr"] },
 ];
 const METRIC = Object.fromEntries(METRICS.map(m => [m.key, m]));
 
 // The ones most papers report; "Just the popular ones" hides the rest on
-// the Confusion matrix and Would you rather tabs. F1 lives on the Summary
-// metrics tab only.
+// the Confusion matrix and Would you rather tabs.
 const POPULAR = ["prev", "acc", "tpr", "fpr", "ppv"];
 const SETTINGS = { popular: true };
 
 /** Metrics listed on the Confusion matrix tab, under the toggle. */
 function shownMetrics() {
-  return METRICS.filter(m => m.key !== "f1"
-    && (!SETTINGS.popular || POPULAR.includes(m.key)));
+  return METRICS.filter(m => !SETTINGS.popular || POPULAR.includes(m.key));
 }
 
 function cellSum(c, cells) { return cells.reduce((s, k) => s + c[k], 0); }
@@ -75,11 +70,8 @@ function allMetrics(c) {
   return Object.fromEntries(METRICS.map(m => [m.key, metricValue(m, c)]));
 }
 
-/** Value as shown: F1 as a decimal (its usual form), the rest as a %. */
-function metricText(key, v) {
-  if (key === "f1" && Number.isFinite(v)) return v.toFixed(2);
-  return pct(v);
-}
+/** Value as shown, a percentage. */
+function metricText(key, v) { return pct(v); }
 
 /** Colored cell name. */
 function chip(k) {

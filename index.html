@@ -6,8 +6,7 @@
   <title>Binary metrics, visually</title>
   <meta name="description" content="Edit a confusion matrix and watch the
     binary classification metrics update, drag a threshold to trace the ROC
-    curve and F1, and pick between classifiers in a would-you-rather
-    game.">
+    curve, and pick between classifiers in a would-you-rather game.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='15' height='15' rx='2' fill='%23bfdbfe'/%3E%3Crect x='18' y='3' width='11' height='15' rx='2' fill='%232563eb'/%3E%3Crect x='3' y='18' width='6' height='11' rx='2' fill='%23ea580c'/%3E%3Crect x='9' y='18' width='20' height='11' rx='2' fill='%23fed7aa'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -45,8 +44,7 @@
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-mode="table">Confusion
         matrix</button>
-      <button class="tab" role="tab" data-mode="roc">Summary
-        metrics</button>
+      <button class="tab" role="tab" data-mode="roc">ROC curve</button>
       <button class="tab" role="tab" data-mode="game">Would you
         rather?</button>
       <label class="check popular" data-show="table game"
@@ -130,28 +128,22 @@
     </div>
   </main>
 
-  <!-- =============================================== Summary metrics -->
+  <!-- ===================================================== ROC curve -->
   <section class="intro card" data-show="roc">
     <div>
-      <h2>Summary metrics</h2>
-      <p class="goal"><b>Goal:</b> boil a classifier down to one number.
-        AUC summarizes the whole trade-off between catching the 1s (TPR)
-        and false alarms on the 0s (FPR) over every threshold; F1 (Dice)
-        combines precision and recall at one threshold.</p>
+      <h2>The ROC curve</h2>
+      <p class="goal"><b>Goal:</b> rate a classifier with one number that
+        does not depend on picking a threshold.</p>
       <p class="goal approach"><b>Approach:</b> a classifier gives each
         sample a score (<i>c</i>&nbsp;&middot;&nbsp;<i>x</i> for the
         perceptron or LDA, &sigma;(<i>c</i>&nbsp;&middot;&nbsp;<i>x</i>)
-        for logistic regression) and predicts 1 when score &ge;
+        for logistic regression) and estimates 1 when score &ge;
         <i>t</i>. Each threshold <i>t</i> gives one confusion matrix, so
         one point (FPR, TPR). Sweeping <i>t</i> from high to low traces the
-        ROC curve.</p>
+        ROC curve; the area under it (AUC) scores every threshold at
+        once.</p>
       <div class="formula">AUC = area under the ROC curve =
         P(a random Truth 1 sample outscores a random Truth 0 sample)</div>
-      <div class="formula">F1 = harmonic mean of precision and recall =
-        <span class="frac"><span>2 &middot; <span class="chip
-          tp">TP</span></span><span>2 &middot; <span class="chip
-          tp">TP</span> + <span class="chip fp">FP</span> + <span
-          class="chip fn">FN</span></span></span> = Dice</div>
       <p class="muted">Lowering <i>t</i> past a Truth 1 sample steps the
         curve up (one more TP); past a Truth 0 sample, right (one more FP).
         The scores here are drawn from two normal distributions whose means
@@ -163,8 +155,8 @@
         <li>Press <em>Sweep</em>, or drag the threshold from right to left.
           Why does the curve only ever move up or right?
           <details class="answer"><summary>Answer</summary>Lowering
-            <i>t</i> only adds samples to Predict 1. Each added sample is a
-            Truth 1 (TP + 1: up by 1 / #Truth 1) or a Truth 0 (FP + 1:
+            <i>t</i> only adds samples to the red side. Each added sample is
+            a Truth 1 (TP + 1: up by 1 / #Truth 1) or a Truth 0 (FP + 1:
             right by 1 / #Truth 0).</details>
         </li>
         <li>Set the separation to 0. Where does the curve go?
@@ -174,12 +166,13 @@
             same share of each class (TPR &asymp; FPR). That is
             guessing.</details>
         </li>
-        <li>Make the separation negative: the curve sinks below the
-          diagonal. Now press <em>Estimate backwards</em>.
-          <details class="answer"><summary>Answer</summary>Worse than
-            guessing is useful: predict the opposite. Negating every score
-            mirrors each point (FPR, TPR) to (1 &minus; FPR, 1 &minus; TPR)
-            and turns AUC into 1 &minus; AUC.</details>
+        <li>Press <em>Estimate backwards</em>: red is now estimated where
+          the score is low. What happens to the curve and the AUC?
+          <details class="answer"><summary>Answer</summary>The curve
+            mirrors through the center, below the diagonal: each point
+            (FPR, TPR) becomes (1 &minus; FPR, 1 &minus; TPR), and AUC
+            becomes 1 &minus; AUC. A classifier that is worse than guessing
+            is still useful: estimate the opposite.</details>
         </li>
         <li>Turn on <em>AUC as pairs</em> and hover the cells. Why is the
           area under the staircase the share of correctly ordered pairs?
@@ -189,21 +182,11 @@
             height under the curve is the number of Truth 1 samples that
             outscore that Truth 0 sample.</details>
         </li>
-        <li>Move the prior from 50% to 5%. Which curve keeps its
-          shape: ROC or PR?
-          <details class="answer"><summary>Answer</summary>ROC: TPR and FPR
-            each use one true class, so the prior does not enter (the
-            wiggles are sampling noise). Precision mixes the classes: with
-            few Truth 1s the PR curve sinks toward the 5% guessing
-            line.</details>
-        </li>
-        <li>Set the prior to 10%. Find the threshold with the largest
-          F1, then the one with the highest accuracy. Are they the same?
-          <details class="answer"><summary>Answer</summary>Usually not.
-            With few Truth 1s, accuracy is best when nearly everything is
-            predicted 0, since every true negative counts. F1 ignores the
-            true negatives (outside both circles of the Venn diagram), so it
-            prefers a lower threshold that catches more of the 1s.</details>
+        <li>Move the prior from 50% to 5%. Does the ROC curve change
+          shape?
+          <details class="answer"><summary>Answer</summary>Hardly: TPR and
+            FPR each use one true class, so the prior does not enter (the
+            wiggles are sampling noise).</details>
         </li>
         <li>Where would you put the threshold for a strep test? For a spam
           filter?</li>
@@ -218,11 +201,10 @@
         threshold"></svg>
       <div class="curves">
         <svg id="rocplot" aria-label="ROC curve"></svg>
-        <svg id="prplot" aria-label="precision-recall curve"></svg>
       </div>
-      <p class="hint">Drag the threshold on the scores, or drag along
-        either curve. The arrow keys move it one sample. Rest the pointer on
-        a metric at right for what it means in plain English.</p>
+      <p class="hint">Drag the threshold on the scores, or drag along the
+        curve. The arrow keys move it one sample. Rest the pointer on a
+        metric at right for what it means in plain English.</p>
       <p class="muted" id="r-pair-note" hidden></p>
     </div>
 
@@ -237,25 +219,21 @@
         <label class="slider"><span>Separation</span>
           <input type="range" id="r-sep">
           <span id="r-sepval" class="val"></span></label>
-        <label class="check"><input type="checkbox" id="r-pairs"> AUC as
-          pairs</label>
+        <label class="check" data-tip="Each cell of the ROC square is one
+          pair: one Truth 1 sample against one Truth 0 sample. Green when
+          the Truth 1 sample scores higher (ordered correctly), red when
+          not. The green share is the AUC."><input type="checkbox"
+          id="r-pairs"> AUC as pairs</label>
         <div class="buttons">
           <button id="r-sweep" title="Lower the threshold from above every
             score to below every score"></button>
-          <button id="r-flip" title="Negate every score: predict 1 where
-            the classifier says 0"></button>
+          <button id="r-flip" title="Estimate red where the score is low
+            instead of high"></button>
           <button id="r-resample" title="Draw new scores">&#8635;
             Resample</button>
         </div>
       </div>
       <div class="card readout" id="r-readout" data-ctx="roc"></div>
-      <div class="card" data-ctx="roc">
-        <h3>F1 = Dice: the overlap of two sets</h3>
-        <div id="r-f1" data-explain="f1"></div>
-        <svg id="r-venn" aria-label="Venn diagram of the true and predicted
-          positives at this threshold"></svg>
-        <p class="muted" id="r-venn-note"></p>
-      </div>
     </aside>
   </main>
 
@@ -328,7 +306,6 @@
   <script src="js/metrics.js"></script>
   <script src="js/explain.js"></script>
   <script src="js/mosaic.js"></script>
-  <script src="js/venn.js"></script>
   <script src="js/table.js"></script>
   <script src="js/roc.js"></script>
   <script src="js/game.js"></script>

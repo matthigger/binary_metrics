@@ -95,7 +95,7 @@ const STEPS = [
     ${x.full ? `<p>and correctly clears ${num(x.c.tn)}:</p>
     ${formulaHTML("tnr", x.c)}
     <p class="muted">FPR = 1 &minus; TNR.</p>` : ""}
-    <p class="muted">The ROC curve (Summary metrics tab) plots TPR against
+    <p class="muted">The ROC curve (next tab) plots TPR against
       FPR.</p>` },
   { title: "Out of the Predict 1 column", hl: "ppv", also: "fdr",
     text: x => `

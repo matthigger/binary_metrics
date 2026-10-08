@@ -1,12 +1,13 @@
-// Summary metrics tab: AUC over every threshold and F1 at one. Each
-// sample gets a score; scores of Truth 0 samples are
+// ROC curve tab. Each sample gets a score; scores of Truth 0 samples are
 // drawn from N(-sep/2, 1) and of Truth 1 samples from N(sep/2, 1). The
-// classifier predicts 1 when score >= threshold t. The strip shows the
-// scores (one band per true class) split by t into the four cells; the
-// ROC plot (FPR, TPR) and the PR plot (recall, precision) trace the
-// threshold as it moves, and the Venn diagram shows F1 (Dice) at the
-// current threshold. Lowering t past a Truth 1 sample steps the ROC
-// staircase up, past a Truth 0 sample right.
+// classifier predicts 1 (red) when score >= threshold t, or, estimating
+// backwards, when score <= t. The strip shows the scores (one band per
+// true class) split by t into the four cells, shaded by the estimate; the
+// ROC plot (FPR, TPR) traces the threshold as it moves.
+//
+// The ROC arithmetic runs on effective scores e = dir * score (dir = -1
+// backwards), so "predict 1" is always e >= dir * t: backwards only
+// mirrors the scores, never moves them on the page.
 
 const SCORE = [-5.2, 5.2];
 const MAX_N = 400;
@@ -18,24 +19,23 @@ const R = {
   n: 40,
   prev: 0.5,
   sep: 1.5,
-  // Sign of the noise: Estimate backwards negates it along with sep, so every
-  // score changes sign.
-  sign: 1,
+  back: false,
   seed: 1,
   thr: 0.4,
   pairs: false,
   sweep: null,
-  // Hovered pair cell { i, j } (i-th highest Truth 1, j-th highest
-  // Truth 0) while showing AUC as pairs.
+  // Hovered pair cell { i, j } (i-th highest effective Truth 1, j-th
+  // highest effective Truth 0) while showing AUC as pairs.
   pair: null,
   drag: null,
 };
 
 // From rRegen(): noise streams z[0], z[1]; scores per class sorted high to
-// low (s[0] Truth 0, s[1] Truth 1); every sample sorted high to low
-// (order); the staircase vertices; above[j] = # Truth 1 above the j-th
-// highest Truth 0; and the AUC.
-let rz, rs, order, verts, above, auc;
+// low (rs[0] Truth 0, rs[1] Truth 1); the same as effective scores (es);
+// every sample by effective score, high to low (order); the staircase
+// vertices; above[j] = # Truth 1 above the j-th highest Truth 0 (both
+// effective); and the AUC.
+let rz, rs, es, order, verts, above, auc;
 const rEls = {};
 const ROC_NOUNS = { pop: "samples", pos: "Truth 1 samples",
   neg: "Truth 0 samples", has1: "are Truth 1", has0: "are Truth 0" };
@@ -43,9 +43,18 @@ const ROC_NOUNS = { pop: "samples", pos: "Truth 1 samples",
 EXPLAIN.roc = () => ({ c: rCounts(), n: ROC_NOUNS, who: "the classifier",
   auc });
 
+function dir() { return R.back ? -1 : 1; }
+
+/** Threshold in effective-score units. */
+function effThr() { return dir() * R.thr; }
+
+/** Index into rs of the i-th highest effective score of class c. */
+function rawIdx(c, i) { return R.back ? rs[c].length - 1 - i : i; }
+
 function rCounts() {
-  const tp = rs[1].filter(v => v >= R.thr).length;
-  const fp = rs[0].filter(v => v >= R.thr).length;
+  const t = effThr();
+  const tp = es[1].filter(v => v >= t).length;
+  const fp = es[0].filter(v => v >= t).length;
   return { tn: rs[0].length - fp, fp, fn: rs[1].length - tp, tp };
 }
 
@@ -60,8 +69,9 @@ function rRegen() {
   const P = clamp(Math.round(R.prev * R.n), 1, R.n - 1), Q = R.n - P;
   const mean = [-R.sep / 2, R.sep / 2];
   rs = [Q, P].map((m, c) => rz[c].slice(0, m)
-    .map(z => mean[c] + R.sign * z).sort((a, b) => b - a));
-  order = [...rs[0].map(s => ({ s, y: 0 })), ...rs[1].map(s => ({ s, y: 1 }))]
+    .map(z => mean[c] + z).sort((a, b) => b - a));
+  es = rs.map(a => a.map(v => dir() * v).sort((x, y) => y - x));
+  order = [...es[0].map(s => ({ s, y: 0 })), ...es[1].map(s => ({ s, y: 1 }))]
     .sort((a, b) => b.s - a.s);
   verts = [[0, 0]];
   let tp = 0, fp = 0;
@@ -71,29 +81,34 @@ function rRegen() {
     verts.push([fp / Q, tp / P]);
   }
   let k = 0;
-  above = rs[0].map(v => {
-    while (k < P && rs[1][k] > v) k++;
+  above = es[0].map(v => {
+    while (k < P && es[1][k] > v) k++;
     return k;
   });
   auc = above.reduce((s, a) => s + a, 0) / (P * Q);
 }
 
-/** Threshold putting exactly the top k samples at or above it. */
+/** Threshold (score units) predicting exactly k samples as 1. */
 function thrForK(k) {
-  if (k <= 0) return order[0].s + 0.25;
-  if (k >= order.length) return order[order.length - 1].s - 0.25;
-  return (order[k - 1].s + order[k].s) / 2;
+  let e;
+  if (k <= 0) e = order[0].s + 0.25;
+  else if (k >= order.length) e = order[order.length - 1].s - 0.25;
+  else e = (order[k - 1].s + order[k].s) / 2;
+  return dir() * e;
 }
 
-function currentK() { return order.filter(o => o.s >= R.thr).length; }
+function currentK() {
+  const t = effThr();
+  return order.filter(o => o.s >= t).length;
+}
 
 // ----------------------------------------------------------------- build
 
 function rBuild() {
-  for (const id of ["strip", "rocplot", "prplot", "r-n", "r-nval",
+  for (const id of ["strip", "rocplot", "r-n", "r-nval",
     "r-prev", "r-prevval", "r-sep", "r-sepval", "r-pairs",
     "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend",
-    "r-pair-note", "r-venn", "r-venn-note", "r-f1"]) {
+    "r-pair-note"]) {
     rEls[id] = document.getElementById(id);
   }
   const slider = (id, key) => {
@@ -109,7 +124,7 @@ function rBuild() {
   rEls["r-prev"].min = 0.05;
   rEls["r-prev"].max = 0.95;
   rEls["r-prev"].step = 0.01;
-  rEls["r-sep"].min = -3;
+  rEls["r-sep"].min = 0;
   rEls["r-sep"].max = 4;
   rEls["r-sep"].step = 0.1;
   slider("r-n", "n");
@@ -122,9 +137,8 @@ function rBuild() {
   };
   rEls["r-sweep"].onclick = toggleSweep;
   rEls["r-flip"].onclick = () => {
-    R.sign = -R.sign;
-    R.sep = -R.sep;
-    R.thr = -R.thr;
+    R.back = !R.back;
+    R.pair = null;
     rRegen();
     rDraw();
   };
@@ -134,16 +148,8 @@ function rBuild() {
     rRegen();
     rDraw();
   };
-  rEls["r-legend"].innerHTML = `
-    <span class="key"><span class="dot c0"></span>Truth 0</span>
-    <span class="key"><span class="dot c1"></span>Truth 1</span>
-    <span class="key"><span class="dot ring"></span>hollow: predicted
-      wrong</span>
-    <span class="key"><span class="swatch pred1"></span>Predict 1
-      (score &ge; <i>t</i>)</span>`;
   stripEvents();
   plotEvents(rEls.rocplot, "roc");
-  plotEvents(rEls.prplot, "pr");
   noise();
   rRegen();
 }
@@ -173,16 +179,21 @@ function rDraw() {
   rEls["r-sepval"].textContent = `${fmt(R.sep, 1)} (mean of Truth 1 minus `
     + `mean of Truth 0)`;
   rEls["r-sweep"].textContent = R.sweep ? "■ Stop" : "▶ Sweep";
-  rEls["r-flip"].textContent = R.sign > 0 ? "Estimate backwards"
-    : "Undo backwards";
+  rEls["r-flip"].textContent = R.back ? "Undo backwards"
+    : "Estimate backwards";
+  const [lo, hi] = R.back ? ["&gt;", "&le;"] : ["&lt;", "&ge;"];
+  rEls["r-legend"].innerHTML = `
+    <span class="key"><span class="dot c0"></span>Truth 0</span>
+    <span class="key"><span class="dot c1"></span>Truth 1</span>
+    <span class="key"><span class="swatch est0"></span>Estimated blue
+      (score ${lo} <i>t</i>)</span>
+    <span class="key"><span class="swatch est1"></span>Estimated red
+      (score ${hi} <i>t</i>)</span>`;
   rEls["r-pair-note"].hidden = !R.pairs;
   const c = rCounts(), k = currentK();
   drawStrip(c);
   drawRoc(k);
-  drawPr(k);
   rReadout(c, k);
-  rEls["r-f1"].innerHTML = formulaHTML("f1", c);
-  drawVenn(rEls["r-venn"], rEls["r-venn-note"], c);
 }
 
 /**
@@ -226,8 +237,13 @@ function drawStrip(c) {
   svg.replaceChildren();
   svg.setAttribute("viewBox", `0 0 ${S.w} ${S.h + 26}`);
   const tx = clamp(sxs(R.thr), S.x0, S.x1);
-  node("rect", { x: tx, y: S.bands[0].y0 - 4, width: S.x1 - tx,
-    height: S.bands[1].y1 - S.bands[0].y0 + 8, class: "pred1-bg" }, svg);
+  // Class estimated left and right of the threshold.
+  const side = R.back ? [1, 0] : [0, 1];
+  const by = S.bands[0].y0 - 4, bh = S.bands[1].y1 - S.bands[0].y0 + 8;
+  node("rect", { x: S.x0, y: by, width: tx - S.x0, height: bh,
+    class: `est-bg c${side[0]}` }, svg);
+  node("rect", { x: tx, y: by, width: S.x1 - tx, height: bh,
+    class: `est-bg c${side[1]}` }, svg);
   for (const [i, b] of S.bands.entries()) {
     node("line", { x1: S.x0, x2: S.x1, y1: b.y1, y2: b.y1,
       class: "band-floor" }, svg);
@@ -247,13 +263,13 @@ function drawStrip(c) {
   const pos = dotLayout();
   for (const cl of [0, 1]) {
     rs[cl].forEach((s, i) => {
-      const p = pos[cl][i], right = (s >= R.thr) === (cl === 1);
-      node("circle", { cx: p.x, cy: p.y, r: p.r - 0.6,
-        class: `sd c${cl}${right ? "" : " wrong"}` }, svg);
+      const p = pos[cl][i];
+      node("circle", { cx: p.x, cy: p.y, r: p.r - 0.6, class: `sd c${cl}` },
+        svg);
     });
   }
   if (R.pair) {
-    const a = pos[1][R.pair.i], b = pos[0][R.pair.j];
+    const a = pos[1][rawIdx(1, R.pair.i)], b = pos[0][rawIdx(0, R.pair.j)];
     node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "pair-link" },
       svg);
     for (const p of [a, b]) {
@@ -266,15 +282,27 @@ function drawStrip(c) {
   node("line", { x1: tx, x2: tx, y1: 22, y2: S.bands[1].y1 + 4,
     class: "thr-line" }, g);
   node("circle", { cx: tx, cy: 22, r: 7, class: "thr-grip" }, g);
-  text(`t = ${fmt(R.thr, 2)}`, { x: tx + 12, y: 14, class: "thr-label" }, g);
-  text("← Predict 0", { x: tx - 12, y: 14, class: "thr-side",
-    "text-anchor": "end" }, g);
-  const q = (k, x, y, side) => text(`${CELL_LABEL[k]} ${c[k]}`, { x, y,
-    class: `quad cell-name ${k} ${side}` }, svg);
-  q("tn", tx - 10, S.bands[0].y0 + 14, "l");
-  q("fp", tx + 10, S.bands[0].y0 + 14, "r");
-  q("fn", tx - 10, S.bands[1].y0 + 14, "l");
-  q("tp", tx + 10, S.bands[1].y0 + 14, "r");
+  text(`t = ${fmt(R.thr, 2)}`, { x: tx + 12, y: 32, class: "thr-label" }, g);
+  // Region names, dropped when their side is too narrow to hold them.
+  const name = ["blue", "red"];
+  if (tx - S.x0 > 150) {
+    text(`← Estimated ${name[side[0]]}`, { x: tx - 12, y: 13,
+      class: `est-label c${side[0]}`, "text-anchor": "end" }, g);
+  }
+  if (S.x1 - tx > 150) {
+    text(`Estimated ${name[side[1]]} →`, { x: tx + 12, y: 13,
+      class: `est-label c${side[1]}` }, g);
+  }
+  // Cell of each (band, side): row = truth, column = the side's estimate.
+  const cell = (truth, est) => [["tn", "fp"], ["fn", "tp"]][truth][est];
+  for (const t of [0, 1]) {
+    const y = S.bands[t].y0 + 14;
+    for (const [j, x, cls] of [[0, tx - 10, "l"], [1, tx + 10, "r"]]) {
+      const k = cell(t, side[j]);
+      text(`${CELL_LABEL[k]} ${c[k]}`, { x, y,
+        class: `quad cell-name ${k} ${cls}` }, svg);
+    }
+  }
 }
 
 function plotFrame(svg, xl, yl) {
@@ -349,37 +377,6 @@ function drawRoc(k) {
     class: "auc-label", "text-anchor": "end" }, svg);
 }
 
-function prPoints() {
-  const P = rs[1].length, pts = [];
-  let tp = 0;
-  order.forEach((o, i) => {
-    if (o.y) tp++;
-    pts.push([tp / P, tp / (i + 1)]);
-  });
-  return pts;
-}
-
-function drawPr(k) {
-  const svg = rEls.prplot, pts = prPoints(), base = rs[1].length / R.n;
-  plotFrame(svg, "Recall (TPR)", "Precision (PPV)");
-  node("rect", { x: PLOT.x0, y: PLOT.y0, width: PLOT.x1 - PLOT.x0,
-    height: PLOT.y1 - PLOT.y0, class: "frame" }, svg);
-  node("line", { x1: px(0), x2: px(1), y1: py(base), y2: py(base),
-    class: "chance" }, svg);
-  text(`guessing: precision = prior = ${pct(base)}`, { x: px(0.98),
-    y: py(base) - 6, class: "chance-label", "text-anchor": "end" }, svg);
-  node("path", { d: pathOf(pts), class: "curve-all" }, svg);
-  if (k >= 1) {
-    node("path", { d: pathOf(pts.slice(0, k)), class: "curve-traced" }, svg);
-    const [x, y] = pts[k - 1];
-    node("circle", { cx: px(x), cy: py(y), r: 6.5, class: "cur" }, svg);
-  } else {
-    text("t above every score: nothing predicted 1, precision undefined",
-      { x: px(0.5), y: py(0.5), class: "chance-label",
-        "text-anchor": "middle" }, svg);
-  }
-}
-
 function rReadout(c, k) {
   const m = allMetrics(c), P = rs[1].length, Q = rs[0].length;
   const good = Math.round(auc * P * Q);
@@ -407,8 +404,8 @@ function rReadout(c, k) {
       AUC = ${num(good)} / ${num(P * Q)}.</p>
     ${verts[k][1] < verts[k][0] ? `<p class="warn">This point is below the
       diagonal: worse than guessing. Predicting the opposite would land at
-      (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try Estimate
-      backwards.</p>` : ""}`;
+      (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try ${R.back
+      ? "Undo backwards" : "Estimate backwards"}.</p>` : ""}`;
 }
 
 // ------------------------------------------------------------ interaction
@@ -434,11 +431,10 @@ function stripEvents() {
   svg.addEventListener("pointercancel", end);
 }
 
-/** Vertex index nearest the pointer on the ROC or PR plot. */
-function nearestK(kind, p) {
-  const pts = kind === "roc" ? verts : [[0, 1], ...prPoints()];
+/** Vertex index nearest the pointer on the ROC plot. */
+function nearestK(p) {
   let best = 0, bd = Infinity;
-  pts.forEach((q, i) => {
+  verts.forEach((q, i) => {
     const d = (px(q[0]) - p.x) ** 2 + (py(q[1]) - p.y) ** 2;
     if (d < bd) {
       bd = d;
@@ -450,7 +446,7 @@ function nearestK(kind, p) {
 
 function plotEvents(svg, kind) {
   const move = e => {
-    R.thr = thrForK(nearestK(kind, svgPoint(svg, e)));
+    R.thr = thrForK(nearestK(svgPoint(svg, e)));
     rDraw();
   };
   svg.addEventListener("pointerdown", e => {
@@ -496,10 +492,12 @@ function showPair() {
       + "Truth 0) pair, ringed on the strip.";
     return;
   }
-  const a = rs[1][R.pair.i], b = rs[0][R.pair.j], ok = a > b;
+  const a = rs[1][rawIdx(1, R.pair.i)], b = rs[0][rawIdx(0, R.pair.j)];
+  const ok = dir() * a > dir() * b;
   el.innerHTML = `This pair: Truth 1 scores ${fmt(a)}, Truth 0 scores
     ${fmt(b)}. ${ok ? "Ordered correctly: the cell is under the curve."
-    : "Ordered wrong: the cell is above the curve."}`;
+    : "Ordered wrong: the cell is above the curve."}${R.back ? " (Backwards,"
+    + " a lower score counts as more red.)" : ""}`;
 }
 
 function toggleSweep() {
@@ -512,7 +510,7 @@ function toggleSweep() {
   const t0 = performance.now(), ms = 6000;
   R.sweep = requestAnimationFrame(function tick(now) {
     const f = Math.min(1, (now - t0) / ms);
-    R.thr = hi + (lo - hi) * f;
+    R.thr = dir() * (hi + (lo - hi) * f);
     if (f < 1) R.sweep = requestAnimationFrame(tick);
     else R.sweep = null;
     rDraw();
@@ -527,7 +525,8 @@ function stopSweep() {
 function rKey(e) {
   if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return false;
   stopSweep();
-  const k = currentK() + (e.key === "ArrowLeft" ? 1 : -1);
+  // Left lowers t: one more predicted 1, or one fewer when backwards.
+  const k = currentK() + (e.key === "ArrowLeft" ? 1 : -1) * dir();
   R.thr = thrForK(clamp(k, 0, order.length));
   rDraw();
   return true;

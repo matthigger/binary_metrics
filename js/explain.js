@@ -62,10 +62,6 @@ function explainText(key, x) {
     bacc: () => `The average of TPR (${pct(metricValue("tpr", c))}) and TNR `
       + `(${pct(metricValue("tnr", c))}): how often ${who} is right on each `
       + "class, each counting equally however rare.",
-    f1: () => `One score, high only when both recall (${pct(
-      metricValue("tpr", c))} of the ${n.pos} caught) and precision (${pct(
-      metricValue("ppv", c))} of the flags right) are high. True negatives `
-      + "never count.",
     auc: () => `Pick one ${n.pos.replace(/s$/, "")} and one `
       + `${n.neg.replace(/s$/, "")} at random: ${pct(v)} of the time the `
       + `first gets the higher score.`,
