@@ -1,5 +1,5 @@
 // Would you rather tab. Each round has a scenario (population size N and
-// prevalence, so the row totals P and Q are known), a goal, and two
+// prior, so the row totals P and Q are known), a goal, and two
 // classifiers each described by two clues in different terms. One clue is
 // always about a row (TPR, FNR, FN, TNR, FPR or FP), so it fills one cell;
 // the other fills a second; together they give the whole matrix. After a
@@ -334,7 +334,7 @@ function gDraw() {
   gEls["g-scene"].innerHTML = `
     <h2>${s.title}</h2>
     <p>${num(rd.N)} ${s.pop}: <b>${num(rd.P)}</b> are ${s.pos} and
-      <b>${num(rd.Q)}</b> are ${s.neg} (prevalence ${pct(rd.P / rd.N)}).</p>
+      <b>${num(rd.Q)}</b> are ${s.neg} (prior ${pct(rd.P / rd.N)}).</p>
     <p class="goal"><b>Goal:</b> ${GOALS[rd.goal].text(s)}</p>
     <p class="wyr">Would you rather use&hellip;</p>`;
   gEls["g-opts"].replaceChildren(...rd.opts.map((o, i) => optionCard(o, i)));

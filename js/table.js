@@ -18,7 +18,7 @@ const PRESETS = {
   },
   strep: {
     name: "Strep test",
-    // 37% prevalence; sensitivity 86%, specificity 95%.
+    // 37% prior; sensitivity 86%, specificity 95%.
     counts: { tn: 601, fp: 29, fn: 52, tp: 318 },
     nouns: { pop: "children with a sore throat", pos: "children with strep",
       neg: "children without strep", has1: "have strep",
@@ -38,7 +38,7 @@ const PRESETS = {
       has0: "don't have breast cancer", test: "the mammogram",
       t0: "No cancer", t1: "Cancer", p0: "Negative", p1: "Positive" },
     source: "Screening 1,000 women, with the classic teaching numbers: "
-      + "prevalence 1%, sensitivity 90%, false alarm rate 9% "
+      + "prior 1%, sensitivity 90%, false alarm rate 9% "
       + "(Gigerenzer et al. 2007).",
   },
 };
@@ -66,11 +66,11 @@ const STEPS = [
     <p class="muted">Divided by N, the four counts are the joint
       distribution of (truth, prediction). Edit any of them in the
       table.</p>` },
-  { title: "Prevalence", hl: "prev", text: x => `
+  { title: "Prior", hl: "prev", text: x => `
     <p>How common is the condition, before any test? ${num(x.n1)} of the
       ${num(x.N)} ${x.n.has1}.</p>
     ${formulaHTML("prev", x.c)}
-    <p class="muted">Prevalence describes the population, not the test.
+    <p class="muted">The prior describes the population, not the test.
       Still, several metrics below depend on it.</p>` },
   { title: "Accuracy", hl: "acc", text: x => `
     <p>How often is ${x.n.test} right? It is right for the cells on the
@@ -78,7 +78,7 @@ const STEPS = [
     ${formulaHTML("acc", x.c)}
     <p class="muted">Careful when the condition is rare: a test that
       always says negative is right for everyone without it, an accuracy
-      of 1 &minus; prevalence = ${pct(1 - x.m.prev)}.</p>` },
+      of 1 &minus; prior = ${pct(1 - x.m.prev)}.</p>` },
   { title: "Out of the Truth 1 row", hl: "tpr", also: "fnr", text: x => `
     <p>Of the ${num(x.n1)} ${x.n.pos}, ${x.n.test} catches
       ${num(x.c.tp)}:</p>
@@ -113,14 +113,14 @@ const STEPS = [
     ${formulaHTML("npv", x.c)}
     <p>The other ${num(x.c.fn)} are missed:</p>
     ${formulaHTML("for", x.c)}` },
-  { title: "Rows describe the test; columns depend on prevalence",
+  { title: "Rows describe the test; columns depend on the prior",
     hl: null, rows: true, text: x => `
     <p>The row ratios use one true class each, so they describe the test
       itself. The column ratios mix both rows, so they also depend on how
       common the condition is.</p>
     <p><b>Drag the line between the rows</b>${T.view !== "mosaic"
       ? " (switch to the Mosaic view first)" : T.toScale ? ""
-      : " (turn on Rows to scale first)"}: prevalence changes, the row
+      : " (turn on Rows to scale first)"}: the prior changes, the row
       ratios stay put and the column ratios move.</p>
     <div class="compare">
       <div><h4>Rows</h4>
@@ -130,7 +130,7 @@ const STEPS = [
         <div>Precision <b>${pct(x.m.ppv)}</b></div>
         ${x.full ? `<div>NPV <b>${pct(x.m.npv)}</b></div>` : ""}</div>
       <div><h4>Neither</h4>
-        <div>Prevalence <b>${pct(x.m.prev)}</b></div>
+        <div>Prior <b>${pct(x.m.prev)}</b></div>
         <div>Accuracy <b>${pct(x.m.acc)}</b></div></div>
     </div>` },
   { title: "Balanced accuracy", hl: "bacc", full: true, text: x => `

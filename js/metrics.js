@@ -24,7 +24,7 @@ const GROUPS = [
 const METRICS = [
   { key: "acc", group: "all", name: "Accuracy", aka: "",
     num: ["tn", "tp"], den: CELLS },
-  { key: "prev", group: "all", name: "Prevalence", aka: "base rate",
+  { key: "prev", group: "all", name: "Prior", aka: "prevalence, base rate",
     num: ["fn", "tp"], den: CELLS },
   { key: "tpr", group: "t1", name: "TPR", aka: "recall, sensitivity",
     num: ["tp"], den: ["fn", "tp"] },

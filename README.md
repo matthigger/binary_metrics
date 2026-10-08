@@ -10,11 +10,11 @@ threshold, is not). Three tabs:
   = truth, height ∝ class count, split by the prediction, so area ∝ count;
   the total stays fixed). A tour highlights each metric's numerator
   (filled) and denominator (outlined). "Just the popular ones" (on by
-  default) limits this tab and the game to prevalence, accuracy, TPR, FPR
+  default) limits this tab and the game to prior, accuracy, TPR, FPR
   and precision; off, it adds FNR, TNR, FDR, NPV, FOR and balanced
   accuracy.
 - **Summary metrics.** AUC and F1. Scores of each class are drawn from two
-  normals (separation, prevalence and sample count are sliders). Drag the
+  normals (separation, prior and sample count are sliders). Drag the
   threshold on the score strip, or along either curve, and watch it move
   along the ROC and precision-recall curves; a Venn diagram shows F1 as
   the Dice overlap of the true and predicted positives at that threshold.

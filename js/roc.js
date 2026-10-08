@@ -366,7 +366,7 @@ function drawPr(k) {
     height: PLOT.y1 - PLOT.y0, class: "frame" }, svg);
   node("line", { x1: px(0), x2: px(1), y1: py(base), y2: py(base),
     class: "chance" }, svg);
-  text(`guessing: precision = prevalence = ${pct(base)}`, { x: px(0.98),
+  text(`guessing: precision = prior = ${pct(base)}`, { x: px(0.98),
     y: py(base) - 6, class: "chance-label", "text-anchor": "end" }, svg);
   node("path", { d: pathOf(pts), class: "curve-all" }, svg);
   if (k >= 1) {
