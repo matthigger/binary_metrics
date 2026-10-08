@@ -1,6 +1,6 @@
-// Hover to explain in plain English. An element with data-explain (a
-// metric key, a cell key, "auc" or "flag") or data-cell gets a tooltip
-// sentence; the nearest ancestor's data-ctx names the context, a function
+// Hover to explain in plain English. An element with data-tip shows that
+// text as is. One with data-explain (a metric key, a cell key, "auc" or
+// "flag") or data-cell gets a tooltip sentence; the nearest ancestor's data-ctx names the context, a function
 // in EXPLAIN returning { c?, n, who, auc? }: the counts (absent for a
 // generic definition), the nouns { pop, pos, neg, has1, has0 } and the
 // classifier's name.
@@ -105,16 +105,14 @@ const GENERIC = {
   }
 
   document.addEventListener("pointerover", e => {
-    const el = e.target.closest ? e.target.closest("[data-explain], "
-      + "[data-cell]") : null;
+    const el = e.target.closest ? e.target.closest("[data-tip], "
+      + "[data-explain], [data-cell]") : null;
     const host = el && el.closest("[data-ctx]");
-    if (!el || !host || !EXPLAIN[host.dataset.ctx]) {
-      cur = null;
-      tip.hidden = true;
-      return;
+    let s = el && el.dataset.tip;
+    if (!s && host && EXPLAIN[host.dataset.ctx]) {
+      s = explainText(el.dataset.explain || el.dataset.cell,
+        EXPLAIN[host.dataset.ctx]());
     }
-    const key = el.dataset.explain || el.dataset.cell;
-    const s = explainText(key, EXPLAIN[host.dataset.ctx]());
     cur = s ? el : null;
     tip.hidden = !s;
     if (s) {

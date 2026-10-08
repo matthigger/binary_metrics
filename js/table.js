@@ -189,13 +189,14 @@ function tHighlight() {
 function tBuild() {
   for (const id of ["presets", "toscale", "cm-table", "mosaic",
     "story-count", "story-title", "story-body", "story-back",
-    "story-next", "mlist", "t-source", "t-view", "toscale-row"]) {
+    "story-next", "mlist", "t-view", "toscale-row"]) {
     tEls[id] = document.getElementById(id);
   }
   for (const [key, p] of Object.entries(PRESETS)) {
     const b = document.createElement("button");
     b.textContent = p.name;
     b.dataset.preset = key;
+    b.dataset.tip = p.source;
     b.setAttribute("role", "radio");
     b.onclick = () => setPreset(key);
     tEls.presets.append(b);
@@ -315,7 +316,6 @@ function tDraw() {
   for (const b of tEls.presets.children) {
     b.setAttribute("aria-checked", b.dataset.preset === T.preset);
   }
-  tEls["t-source"].textContent = PRESETS[T.preset].source;
   for (const b of tEls["t-view"].children) {
     b.setAttribute("aria-checked", b.dataset.view === T.view);
   }
