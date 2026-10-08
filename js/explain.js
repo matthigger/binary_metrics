@@ -32,12 +32,14 @@ function explainText(key, x) {
   }
   const f = freq(v);
   const S = {
-    tn: () => `${Who} says negative and is right: ${num(c.tn)} ${n.neg}.`,
-    fp: () => `${Who} says positive but is wrong, a false alarm: `
-      + `${num(c.fp)} ${n.neg}.`,
-    fn: () => `${Who} says negative but is wrong, a miss: ${num(c.fn)} `
-      + `${n.pos}.`,
-    tp: () => `${Who} says positive and is right: ${num(c.tp)} ${n.pos}.`,
+    tn: () => `True negative (TN): ${who} says negative and is right. `
+      + `${num(c.tn)} ${n.neg}.`,
+    fp: () => `False positive (FP): ${who} says positive but is wrong, a `
+      + `false alarm. ${num(c.fp)} ${n.neg}.`,
+    fn: () => `False negative (FN): ${who} says negative but is wrong, a `
+      + `miss. ${num(c.fn)} ${n.pos}.`,
+    tp: () => `True positive (TP): ${who} says positive and is right. `
+      + `${num(c.tp)} ${n.pos}.`,
     flag: () => `${Who} flags ${num(c.tp + c.fp)} of the `
       + `${num(cellSum(c, CELLS))} ${n.pop} as positive, right or wrong.`,
     acc: () => `${Who} is right about ${f.k} of every ${f.base} ${n.pop}.`,
