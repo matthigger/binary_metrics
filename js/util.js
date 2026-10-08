@@ -43,18 +43,16 @@ function gauss(r) {
   return Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
 }
 
-/** Percentage: whole when it is one, else one decimal; NaN is undefined. */
-function pct(x) {
+/** Percentage to a fixed number of decimals; NaN is undefined. */
+function pct(x, digits = 1) {
   if (!Number.isFinite(x)) return "undefined";
-  const p = 100 * x;
-  if (Math.abs(p - Math.round(p)) < 0.05) return `${Math.round(p)}%`;
-  return `${p.toFixed(1)}%`;
+  return `${(100 * x).toFixed(digits)}%`;
 }
 
 function cap(s) { return s[0].toUpperCase() + s.slice(1); }
 
-/** Count with a thousands separator. */
-function num(n) { return n.toLocaleString("en-US"); }
+/** Count, rounded to whole, with a thousands separator. */
+function num(n) { return Math.round(n).toLocaleString("en-US"); }
 
 /** Signed decimal with a true minus sign. */
 function fmt(x, digits = 2) {

@@ -244,7 +244,7 @@ function buildTable() {
       T.counts[inp.dataset.cell] = v;
       tDraw();
     };
-    inp.onblur = () => { inp.value = T.counts[inp.dataset.cell]; };
+    inp.onblur = () => { inp.value = Math.round(T.counts[inp.dataset.cell]); };
   }
   for (const td of tEls["cm-table"].querySelectorAll("td.cm-cell")) {
     td.onmouseenter = () => hoverCell(td.dataset.cell);
@@ -335,7 +335,9 @@ function drawTable(x) {
     el.textContent = x.n[el.dataset.noun];
   }
   for (const inp of root.querySelectorAll("input")) {
-    if (inp !== document.activeElement) inp.value = x.c[inp.dataset.cell];
+    if (inp !== document.activeElement) {
+      inp.value = Math.round(x.c[inp.dataset.cell]);
+    }
   }
   for (const el of root.querySelectorAll("[data-prop]")) {
     el.textContent = x.N ? pct(x.c[el.dataset.prop] / x.N) : "";
@@ -429,7 +431,9 @@ function drawList(x) {
 /**
  * Dividers move samples between cells with N fixed. The row divider sets
  * the class counts and keeps each row's rates (TPR, FPR) from the start of
- * the drag; a row's own divider trades between its two cells.
+ * the drag exactly: its cells hold expected counts, unrounded, so the row
+ * ratios cannot wobble; counts are rounded only for display. A row's own
+ * divider trades whole samples between its two cells.
  */
 function buildMosaicEvents() {
   const svg = tEls.mosaic;
@@ -449,18 +453,18 @@ function buildMosaicEvents() {
       return;
     }
     const p = svgPoint(svg, e), b = MBOX, c = T.counts;
-    const N = cellSum(c, CELLS);
+    const N = Math.round(cellSum(c, CELLS));
     if (T.drag.type === "row") {
       const n0 = Math.round(clamp((p.y - b.y0) / (b.y1 - b.y0), 0, 1) * N);
       const n1 = N - n0;
-      c.fp = Math.round(T.drag.fpr * n0);
+      c.fp = T.drag.fpr * n0;
       c.tn = n0 - c.fp;
-      c.tp = Math.round(T.drag.tpr * n1);
+      c.tp = T.drag.tpr * n1;
       c.fn = n1 - c.tp;
     } else {
       const f = clamp((p.x - b.x0) / (b.x1 - b.x0), 0, 1);
       const [lft, rgt] = T.drag.type === "col0" ? ["tn", "fp"] : ["fn", "tp"];
-      const n = c[lft] + c[rgt];
+      const n = Math.round(c[lft] + c[rgt]);
       c[lft] = Math.round(f * n);
       c[rgt] = n - c[lft];
     }
