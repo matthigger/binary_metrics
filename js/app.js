@@ -53,7 +53,7 @@ document.addEventListener("keydown", e => {
 })();
 
 tBuild();
-setPreset("coin");
+setPreset("strep");
 rBuild();
 gBuild();
 setMode(location.hash === "#roc" ? "roc"

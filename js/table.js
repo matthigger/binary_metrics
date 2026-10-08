@@ -145,7 +145,7 @@ const STEPS = [
 const MBOX = { x0: 124, x1: 512, y0: 34, y1: 466 };
 
 const T = {
-  preset: "coin",
+  preset: "strep",
   counts: null,
   step: 0,
   // Metric key under the pointer in the list, or the hovered cell.
