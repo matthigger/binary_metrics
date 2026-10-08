@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Binary metrics, visually</title>
+  <meta name="description" content="Edit a confusion matrix and watch every
+    binary classification metric update, drag a threshold to trace the ROC
+    curve, and pick between classifiers in a would-you-rather game.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='15' height='15' rx='2' fill='%23bfdbfe'/%3E%3Crect x='18' y='3' width='11' height='15' rx='2' fill='%232563eb'/%3E%3Crect x='3' y='18' width='6' height='11' rx='2' fill='%23ea580c'/%3E%3Crect x='9' y='18' width='20' height='11' rx='2' fill='%23fed7aa'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Hatch patterns for the wrong cells (FP, FN), plain and highlighted. -->
+  <svg class="defs" aria-hidden="true" width="0" height="0">
+    <defs>
+      <pattern id="hatch-fp" width="9" height="9"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="9" height="9" fill="#dbeafe"/>
+        <rect width="3.5" height="9" fill="#a9cbfb"/>
+      </pattern>
+      <pattern id="hatch-fp-s" width="9" height="9"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="9" height="9" fill="#93c5fd"/>
+        <rect width="3.5" height="9" fill="#5b9cf6"/>
+      </pattern>
+      <pattern id="hatch-fn" width="9" height="9"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="9" height="9" fill="#ffedd5"/>
+        <rect width="3.5" height="9" fill="#fdc89a"/>
+      </pattern>
+      <pattern id="hatch-fn-s" width="9" height="9"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="9" height="9" fill="#fdba74"/>
+        <rect width="3.5" height="9" fill="#f98d45"/>
+      </pattern>
+    </defs>
+  </svg>
+
+  <header>
+    <h1>Binary metrics, visually</h1>
+    <p class="sub">Every binary classification metric is a ratio of counts
+      from one 2 &times; 2 table.</p>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-mode="table">Confusion
+        matrix</button>
+      <button class="tab" role="tab" data-mode="roc">ROC curve</button>
+      <button class="tab" role="tab" data-mode="game">Would you
+        rather?</button>
+    </nav>
+  </header>
+
+  <!-- ============================================== Confusion matrix -->
+  <section class="intro card" data-show="table">
+    <div>
+      <h2>The confusion matrix</h2>
+      <p class="goal"><b>Goal:</b> describe how well a binary classifier
+        (here, a medical test) does, with a number that answers the
+        question you care about.</p>
+      <p class="goal approach"><b>Approach:</b> count the samples in each
+        of the four cells: truth (row) by prediction (column). Every metric
+        divides some of the cells by a row, a column or the whole
+        table.</p>
+      <div class="formula legend-cm">
+        <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>
+          <th>Predict 1</th></tr></thead><tbody>
+          <tr><th>Truth 0</th><td class="cm-cell tn"><span
+            class="chip tn">TN</span></td><td class="cm-cell fp"><span
+            class="chip fp">FP</span></td></tr>
+          <tr><th>Truth 1</th><td class="cm-cell fn"><span
+            class="chip fn">FN</span></td><td class="cm-cell tp"><span
+            class="chip tp">TP</span></td></tr>
+        </tbody></table>
+      </div>
+      <p class="muted">Edit any count in the table, or drag the lines in
+        the mosaic (the total stays fixed). Hover a metric to light up its
+        numerator (filled) and denominator (outlined); hover a cell to see
+        which metrics use it.</p>
+    </div>
+    <div>
+      <h3>Try this</h3>
+      <ul class="try">
+        <li>Step through the tour with <em>Next</em> or the arrow
+          keys.</li>
+        <li>Pick <em>Mammogram</em>. A woman's mammogram is positive: how
+          likely is it that she has cancer? Guess before you look at
+          precision.
+          <details class="answer"><summary>Answer</summary>About 9%. The
+            990 women without cancer, at a 9% false alarm rate, give 89
+            false positives, swamping the 9 true positives. A rare
+            condition makes most positives false, even for a good
+            test.</details>
+        </li>
+        <li>Pick <em>Always say no</em>. Its accuracy beats the
+          mammogram's. Which metrics expose it?
+          <details class="answer"><summary>Answer</summary>TPR is 0%: it
+            catches no one. Balanced accuracy is 50%, F1 is 0 and
+            precision is undefined (0 / 0), since it never predicts
+            1.</details>
+        </li>
+        <li>On <em>Strep test</em>, drag the line between the rows. Which
+          metrics stay put?
+          <details class="answer"><summary>Answer</summary>The row ratios
+            (TPR, FNR, TNR, FPR): each uses only one true class.
+            Prevalence, accuracy and the column ratios (precision, NPV)
+            move.</details>
+        </li>
+        <li>Raise TN from 601 to 6,000. Which metrics change?
+          <details class="answer"><summary>Answer</summary>Only those
+            whose formula contains TN: accuracy, prevalence, TNR, FPR, NPV,
+            FOR and balanced accuracy. TPR, precision and F1 do not use TN,
+            so they do not move.</details>
+        </li>
+        <li>Build a table with precision 100% but recall 10%. What kind of
+          test is it?
+          <details class="answer"><summary>Answer</summary>For example
+            TP&nbsp;=&nbsp;37, FP&nbsp;=&nbsp;0, FN&nbsp;=&nbsp;333: a
+            cautious test that flags only the sure cases. Every flag is
+            right, but it misses most of the positives.</details>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <main class="panel" data-show="table">
+    <div class="stage card">
+      <div id="cm-table"></div>
+      <svg id="mosaic" aria-label="confusion matrix mosaic"></svg>
+      <p class="hint">Mosaic: each row is a true class (height &prop; its
+        count), split by the prediction, so area &prop; count. Hatched
+        cells are mistakes. Drag a line to move samples between
+        cells.</p>
+      <p class="muted" id="t-source"></p>
+    </div>
+
+    <aside class="side">
+      <div class="card controls">
+        <div class="field"><span>Example</span>
+          <div class="seg wrap" id="presets" role="radiogroup"></div></div>
+        <label class="check"><input type="checkbox" id="toscale" checked>
+          Rows to scale</label>
+        <div class="buttons"><button id="treset" title="Restore the
+          example's counts">Reset counts</button></div>
+      </div>
+
+      <div class="card story">
+        <div class="story-head">
+          <h3 id="story-count"></h3>
+          <div class="buttons">
+            <button id="story-back">&#9664; Back</button>
+            <button id="story-next">Next &#9654;</button>
+          </div>
+        </div>
+        <h2 id="story-title"></h2>
+        <div id="story-body"></div>
+      </div>
+
+      <div class="card">
+        <h3>Every metric</h3>
+        <div id="mlist" class="mlist"></div>
+      </div>
+
+      <div class="card" id="venn-card">
+        <h3>F1 = Dice: the overlap of two sets</h3>
+        <svg id="venn" aria-label="Venn diagram of the true and predicted
+          positives"></svg>
+        <p class="muted" id="venn-note"></p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ===================================================== ROC curve -->
+  <section class="intro card" data-show="roc">
+    <div>
+      <h2>The ROC curve</h2>
+      <p class="goal"><b>Goal:</b> summarize a classifier over every
+        threshold, not just one: the whole trade-off between catching the
+        1s (TPR) and false alarms on the 0s (FPR).</p>
+      <p class="goal approach"><b>Approach:</b> a classifier gives each
+        sample a score (<i>c</i>&nbsp;&middot;&nbsp;<i>x</i> for the
+        perceptron or LDA, &sigma;(<i>c</i>&nbsp;&middot;&nbsp;<i>x</i>)
+        for logistic regression) and predicts 1 when score &ge;
+        <i>t</i>. Each threshold <i>t</i> gives one confusion matrix, so
+        one point (FPR, TPR). Sweeping <i>t</i> from high to low traces the
+        ROC curve.</p>
+      <div class="formula">AUC = area under the ROC curve =
+        P(a random Truth 1 sample outscores a random Truth 0 sample)</div>
+      <p class="muted">Lowering <i>t</i> past a Truth 1 sample steps the
+        curve up (one more TP); past a Truth 0 sample, right (one more FP).
+        The scores here are drawn from two normal distributions whose means
+        differ by the separation.</p>
+    </div>
+    <div>
+      <h3>Try this</h3>
+      <ul class="try">
+        <li>Press <em>Sweep</em>, or drag the threshold from right to left.
+          Why does the curve only ever move up or right?
+          <details class="answer"><summary>Answer</summary>Lowering
+            <i>t</i> only adds samples to Predict 1. Each added sample is a
+            Truth 1 (TP + 1: up by 1 / #Truth 1) or a Truth 0 (FP + 1:
+            right by 1 / #Truth 0).</details>
+        </li>
+        <li>Set the separation to 0. Where does the curve go?
+          <details class="answer"><summary>Answer</summary>Near the
+            diagonal, with AUC near 0.5: the scores carry no information
+            about the class, so at any threshold the classifier flags the
+            same share of each class (TPR &asymp; FPR). That is
+            guessing.</details>
+        </li>
+        <li>Make the separation negative: the curve sinks below the
+          diagonal. Now press <em>Flip scores</em>.
+          <details class="answer"><summary>Answer</summary>Worse than
+            guessing is useful: predict the opposite. Flipping every score
+            mirrors each point (FPR, TPR) to (1 &minus; FPR, 1 &minus; TPR)
+            and turns AUC into 1 &minus; AUC.</details>
+        </li>
+        <li>Turn on <em>AUC as pairs</em> and hover the cells. Why is the
+          area under the staircase the share of correctly ordered pairs?
+          <details class="answer"><summary>Answer</summary>Each column is
+            one Truth 0 sample and each row one Truth 1 sample (both
+            sorted high to low), so each cell is one pair. A column's
+            height under the curve is the number of Truth 1 samples that
+            outscore that Truth 0 sample.</details>
+        </li>
+        <li>Turn on <em>Show whole curves</em> and move the prevalence from
+          50% to 5%. Which curve keeps its shape: ROC or PR?
+          <details class="answer"><summary>Answer</summary>ROC: TPR and FPR
+            each use one true class, so prevalence does not enter (the
+            wiggles are sampling noise). Precision mixes the classes: with
+            few Truth 1s the PR curve sinks toward the 5% guessing
+            line.</details>
+        </li>
+        <li>Where would you put the threshold for a strep test? For a spam
+          filter?</li>
+      </ul>
+    </div>
+  </section>
+
+  <main class="panel" data-show="roc">
+    <div class="stage card">
+      <div class="stage-head" id="r-legend"></div>
+      <svg id="strip" aria-label="scores of each sample with the
+        threshold"></svg>
+      <div class="curves">
+        <svg id="rocplot" aria-label="ROC curve"></svg>
+        <svg id="prplot" aria-label="precision-recall curve"></svg>
+      </div>
+      <p class="hint">Drag the threshold on the scores, or drag along
+        either curve. The arrow keys move it one sample.</p>
+      <p class="muted" id="r-pair-note" hidden></p>
+    </div>
+
+    <aside class="side">
+      <div class="card controls">
+        <label class="slider"><span>Samples</span>
+          <input type="range" id="r-n">
+          <span id="r-nval" class="val"></span></label>
+        <label class="slider"><span>Prevalence</span>
+          <input type="range" id="r-prev">
+          <span id="r-prevval" class="val"></span></label>
+        <label class="slider"><span>Separation</span>
+          <input type="range" id="r-sep">
+          <span id="r-sepval" class="val"></span></label>
+        <label class="check"><input type="checkbox" id="r-whole"> Show
+          whole curves</label>
+        <label class="check"><input type="checkbox" id="r-pairs"> AUC as
+          pairs</label>
+        <div class="buttons">
+          <button id="r-sweep" title="Lower the threshold from above every
+            score to below every score"></button>
+          <button id="r-flip" title="Negate every score">Flip
+            scores</button>
+          <button id="r-resample" title="Draw new scores">&#8635;
+            Resample</button>
+        </div>
+      </div>
+      <div class="card readout" id="r-readout"></div>
+    </aside>
+  </main>
+
+  <!-- ============================================== Would you rather -->
+  <section class="intro card" data-show="game">
+    <div>
+      <h2>Would you rather?</h2>
+      <p class="goal"><b>Goal:</b> choose between two classifiers that are
+        described in different terms.</p>
+      <p class="goal approach"><b>Approach:</b> turn each description into
+        counts. N and the prevalence give the row totals; each clue fills
+        in more of the matrix. Then compute what the goal asks for.</p>
+      <p class="muted">Two clues plus the prevalence pin down the whole
+        confusion matrix. Keys: <b>a</b> or <b>b</b> to choose,
+        <b>Enter</b> for the next round.</p>
+    </div>
+    <div>
+      <h3>Try this</h3>
+      <ul class="try">
+        <li>Guess from your gut first, then work it out. How often is the
+          gut right?</li>
+        <li>Watch for clues about the wrong class: a 99% specificity says
+          nothing about how many positives are caught.</li>
+        <li>For a cost goal, compute (cost of a miss) &times; FN + (cost of
+          a false alarm) &times; FP for each.</li>
+        <li>When the condition is rare, compare accuracy with F1. Which
+          one did the goal ask for?</li>
+      </ul>
+    </div>
+  </section>
+
+  <main class="panel" data-show="game">
+    <div class="stage card game">
+      <div id="g-scene"></div>
+      <div class="options" id="g-opts"></div>
+      <div id="g-verdict" class="verdict"></div>
+    </div>
+
+    <aside class="side">
+      <div class="card readout">
+        <h3>Score</h3>
+        <div id="g-score"></div>
+        <div class="buttons">
+          <button id="g-hint"></button>
+          <button id="g-next">Next round &#9654;</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Cheat sheet</h3>
+        <div id="g-cheat" class="mlist"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <a href="https://github.com/matthigger/binary_metrics">Source on
+      GitHub</a>
+    &middot;
+    <span id="build"></span>
+  </footer>
+
+  <script src="js/version.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/metrics.js"></script>
+  <script src="js/mosaic.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/roc.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
