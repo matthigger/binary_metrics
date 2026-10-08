@@ -153,7 +153,7 @@ const T = {
   hoverCell: null,
   toScale: true,
   // Which picture of the counts the box shows: "table" or "mosaic".
-  view: "table",
+  view: "mosaic",
   drag: null,
 };
 
