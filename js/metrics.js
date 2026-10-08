@@ -18,7 +18,7 @@ const GROUPS = [
   { key: "t0", title: "Out of the Truth 0 row" },
   { key: "p1", title: "Out of the Predict 1 column" },
   { key: "p0", title: "Out of the Predict 0 column" },
-  { key: "sum", title: "Summaries" },
+  { key: "avg", title: "Average of the rows" },
 ];
 
 const METRICS = [
@@ -42,12 +42,24 @@ const METRICS = [
     aka: "negative predictive value", num: ["tn"], den: ["tn", "fn"] },
   { key: "for", group: "p0", name: "FOR", aka: "false omission rate",
     num: ["fn"], den: ["tn", "fn"] },
-  { key: "f1", group: "sum", name: "F1", aka: "Dice",
+  { key: "f1", group: "summary", name: "F1", aka: "Dice",
     num: ["tp", "tp"], den: ["tp", "tp", "fp", "fn"] },
-  { key: "bacc", group: "sum", name: "Balanced accuracy", aka: "",
+  { key: "bacc", group: "avg", name: "Balanced accuracy", aka: "",
     avg: ["tpr", "tnr"] },
 ];
 const METRIC = Object.fromEntries(METRICS.map(m => [m.key, m]));
+
+// The ones most papers report; "Just the popular ones" hides the rest on
+// the Confusion matrix and Would you rather tabs. F1 lives on the Summary
+// metrics tab only.
+const POPULAR = ["prev", "acc", "tpr", "fpr", "ppv"];
+const SETTINGS = { popular: true };
+
+/** Metrics listed on the Confusion matrix tab, under the toggle. */
+function shownMetrics() {
+  return METRICS.filter(m => m.key !== "f1"
+    && (!SETTINGS.popular || POPULAR.includes(m.key)));
+}
 
 function cellSum(c, cells) { return cells.reduce((s, k) => s + c[k], 0); }
 

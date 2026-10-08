@@ -1,10 +1,11 @@
-// Tabs, keyboard routing and the footer build stamp. Each tab lives in its
-// own file: table.js (Confusion matrix), roc.js (ROC curve) and game.js
-// (Would you rather).
+// Tabs, the "Just the popular ones" toggle, keyboard routing and the footer
+// build stamp. Each tab lives in its own file: table.js (Confusion matrix),
+// roc.js (Summary metrics) and game.js (Would you rather).
 
 const MODES = {
   table: { hash: "#confusion-matrix", draw: () => tDraw(), key: e => tKey(e) },
-  roc: { hash: "#roc", draw: () => rDraw(), key: e => rKey(e) },
+  roc: { hash: "#summary-metrics", draw: () => rDraw(),
+    key: e => rKey(e) },
   game: { hash: "#would-you-rather", draw: () => gDraw(),
     key: e => gKey(e) },
 };
@@ -27,6 +28,13 @@ for (const t of document.querySelectorAll(".tab")) {
   t.onclick = () => setMode(t.dataset.mode);
 }
 
+document.getElementById("popular").onchange = e => {
+  SETTINGS.popular = e.target.checked;
+  tPopular();
+  gCheat();
+  MODES[mode].draw();
+};
+
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT" || e.metaKey || e.ctrlKey || e.altKey) {
     return;
@@ -45,8 +53,9 @@ document.addEventListener("keydown", e => {
 })();
 
 tBuild();
-setPreset("strep");
+setPreset("coin");
 rBuild();
 gBuild();
-setMode(Object.keys(MODES).find(k => MODES[k].hash === location.hash)
+setMode(location.hash === "#roc" ? "roc"
+  : Object.keys(MODES).find(k => MODES[k].hash === location.hash)
   || "table");

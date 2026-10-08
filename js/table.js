@@ -1,9 +1,21 @@
 // Confusion matrix tab: an editable 2 x 2 table of counts, the same counts
 // as a mosaic with draggable dividers, a guided tour that highlights each
-// metric's numerator (filled) and denominator (outlined), a list of every
-// metric, and a Venn diagram showing F1 as the Dice overlap of two sets.
+// metric's numerator (filled) and denominator (outlined), and a list of
+// the metrics. "Just the popular ones" (SETTINGS.popular) trims the list
+// and skips the tour steps marked full.
 
 const PRESETS = {
+  coin: {
+    name: "Coin flip",
+    counts: { tn: 250, fp: 250, fn: 250, tp: 250 },
+    nouns: { pop: "samples", pos: "class 1 samples",
+      neg: "class 0 samples", has1: "are class 1", has0: "are class 0",
+      test: "the coin flip", t0: "Class 0", t1: "Class 1",
+      p0: "Tails", p1: "Heads" },
+    source: "A classifier that ignores each sample and flips a fair coin "
+      + "(heads predicts 1), on 1,000 samples with equal priors: 500 of "
+      + "each class. It is right half the time: chance accuracy.",
+  },
   strep: {
     name: "Strep test",
     // 37% prevalence; sensitivity 86%, specificity 95%.
@@ -29,21 +41,11 @@ const PRESETS = {
       + "prevalence 1%, sensitivity 90%, false alarm rate 9% "
       + "(Gigerenzer et al. 2007).",
   },
-  lazy: {
-    name: "Always say no",
-    counts: { tn: 990, fp: 0, fn: 10, tp: 0 },
-    nouns: { pop: "women screened", pos: "women with breast cancer",
-      neg: "women without breast cancer", has1: "have breast cancer",
-      has0: "don't have breast cancer",
-      test: "a test that always says negative", t0: "No cancer",
-      t1: "Cancer", p0: "Negative", p1: "Positive" },
-    source: "The same 1,000 women as Mammogram, \"tested\" by always "
-      + "answering negative. Compare its accuracy with the mammogram's.",
-  },
 };
 
 // Tour steps: hl is the metric highlighted, also a second metric sharing
-// its denominator; text(x) is the step's HTML from the context x.
+// its denominator, full marks a step skipped under "Just the popular ones";
+// text(x) is the step's HTML from the context x (x.full: all metrics on).
 const STEPS = [
   { title: "Four outcomes", hl: null, text: x => `
     <p>Each of the ${num(x.N)} ${x.n.pop} lands in one cell. The row is
@@ -81,28 +83,30 @@ const STEPS = [
     <p>Of the ${num(x.n1)} ${x.n.pos}, ${x.n.test} catches
       ${num(x.c.tp)}:</p>
     ${formulaHTML("tpr", x.c)}
-    <p>and misses ${num(x.c.fn)}:</p>
+    ${x.full ? `<p>and misses ${num(x.c.fn)}:</p>
     ${formulaHTML("fnr", x.c)}
-    <p class="muted">The two add to 100%. Both use only the Truth 1 row:
-      they say nothing about the ${x.n.neg}.</p>` },
-  { title: "Out of the Truth 0 row", hl: "tnr", also: "fpr", text: x => `
-    <p>Of the ${num(x.n0)} ${x.n.neg}, ${x.n.test} correctly clears
-      ${num(x.c.tn)}:</p>
-    ${formulaHTML("tnr", x.c)}
-    <p>and raises a false alarm for ${num(x.c.fp)}:</p>
+    <p class="muted">The two add to 100%.</p>` : ""}
+    <p class="muted">TPR uses only the Truth 1 row: it says nothing about
+      the ${x.n.neg}.</p>` },
+  { title: "Out of the Truth 0 row", hl: "fpr", also: "tnr", text: x => `
+    <p>Of the ${num(x.n0)} ${x.n.neg}, ${x.n.test} raises a false alarm
+      for ${num(x.c.fp)}:</p>
     ${formulaHTML("fpr", x.c)}
-    <p class="muted">FPR = 1 &minus; TNR. The ROC curve (next tab) plots
-      TPR against FPR.</p>` },
+    ${x.full ? `<p>and correctly clears ${num(x.c.tn)}:</p>
+    ${formulaHTML("tnr", x.c)}
+    <p class="muted">FPR = 1 &minus; TNR.</p>` : ""}
+    <p class="muted">The ROC curve (Summary metrics tab) plots TPR against
+      FPR.</p>` },
   { title: "Out of the Predict 1 column", hl: "ppv", also: "fdr",
     text: x => `
     <p>${cap(x.n.test)} says positive for ${num(x.pp)}. How many of them
       really ${x.n.has1}? ${num(x.c.tp)}:</p>
     ${formulaHTML("ppv", x.c)}
-    <p>The other ${num(x.c.fp)} are false alarms:</p>
-    ${formulaHTML("fdr", x.c)}
+    ${x.full ? `<p>The other ${num(x.c.fp)} are false alarms:</p>
+    ${formulaHTML("fdr", x.c)}` : ""}
     <p class="muted">Precision answers the question asked after a
       positive result: should I believe it?</p>` },
-  { title: "Out of the Predict 0 column", hl: "npv", also: "for",
+  { title: "Out of the Predict 0 column", hl: "npv", also: "for", full: true,
     text: x => `
     <p>${cap(x.n.test)} says negative for ${num(x.pn)}. How many of them
       really ${x.n.has0}? ${num(x.c.tn)}:</p>
@@ -123,24 +127,12 @@ const STEPS = [
         <div>FPR <b>${pct(x.m.fpr)}</b></div></div>
       <div><h4>Columns</h4>
         <div>Precision <b>${pct(x.m.ppv)}</b></div>
-        <div>NPV <b>${pct(x.m.npv)}</b></div></div>
+        ${x.full ? `<div>NPV <b>${pct(x.m.npv)}</b></div>` : ""}</div>
       <div><h4>Neither</h4>
         <div>Prevalence <b>${pct(x.m.prev)}</b></div>
         <div>Accuracy <b>${pct(x.m.acc)}</b></div></div>
     </div>` },
-  { title: "F1 score (Dice)", hl: "f1", venn: true, text: x => `
-    <p>One number that rewards both catching the ${x.n.pos} (recall) and
-      being right when flagging them (precision): their harmonic
-      mean.</p>
-    ${formulaHTML("f1", x.c)}
-    <div class="formula">F1 = ${fracHTML("2 · precision · recall",
-      "precision + recall")} = ${fracHTML(
-      `2 · ${pct(x.m.ppv)} · ${pct(x.m.tpr)}`,
-      `${pct(x.m.ppv)} + ${pct(x.m.tpr)}`)}</div>
-    <p class="muted">${chip("tn")} appears nowhere, so piling on true
-      negatives cannot change F1. Read as sets (the Venn diagram below),
-      the same formula is the Dice coefficient.</p>` },
-  { title: "Balanced accuracy", hl: "bacc", text: x => `
+  { title: "Balanced accuracy", hl: "bacc", full: true, text: x => `
     <p>The average of the two row ratios that count correct
       predictions:</p>
     ${formulaHTML("bacc", x.c)}
@@ -149,10 +141,10 @@ const STEPS = [
       100%).</p>` },
 ];
 
-const MBOX = { x0: 160, x1: 616, y0: 34, y1: 452 };
+const MBOX = { x0: 124, x1: 512, y0: 34, y1: 466 };
 
 const T = {
-  preset: "strep",
+  preset: "coin",
   counts: null,
   step: 0,
   // Metric key under the pointer in the list, or the hovered cell.
@@ -171,18 +163,22 @@ function nouns() { return PRESETS[T.preset].nouns; }
 function tCtx() {
   const c = T.counts;
   return { c, n: nouns(), m: allMetrics(c), N: cellSum(c, CELLS),
+    full: !SETTINGS.popular,
     n0: c.tn + c.fp, n1: c.fn + c.tp, pp: c.fp + c.tp, pn: c.tn + c.fn };
 }
 
+/** Tour steps in force under the toggle. */
+function steps() { return STEPS.filter(s => !s.full || !SETTINGS.popular); }
+
 function stepOf(key) {
-  return STEPS.findIndex(s => s.hl === key || s.also === key);
+  return steps().findIndex(s => s.hl === key || s.also === key);
 }
 
 /** Highlight in force: hovered cell, else hovered metric, else the step. */
 function tHighlight() {
   if (T.hoverCell) return { num: [T.hoverCell], den: [] };
   if (T.hoverMetric) return highlightOf(T.hoverMetric);
-  return highlightOf(STEPS[T.step].hl);
+  return highlightOf(steps()[T.step].hl);
 }
 
 // ------------------------------------------------------------------ build
@@ -190,7 +186,7 @@ function tHighlight() {
 function tBuild() {
   for (const id of ["presets", "toscale", "treset", "cm-table", "mosaic",
     "story-count", "story-title", "story-body", "story-back",
-    "story-next", "mlist", "venn", "venn-note", "venn-card", "t-source"]) {
+    "story-next", "mlist", "t-source"]) {
     tEls[id] = document.getElementById(id);
   }
   for (const [key, p] of Object.entries(PRESETS)) {
@@ -248,9 +244,12 @@ function buildTable() {
 
 function buildList() {
   let html = "";
+  const shown = shownMetrics();
   for (const g of GROUPS) {
+    const ms = shown.filter(m => m.group === g.key);
+    if (!ms.length) continue;
     html += `<h4>${g.title}</h4>`;
-    for (const m of METRICS.filter(m => m.group === g.key)) {
+    for (const m of ms) {
       html += `<div class="mrow" data-key="${m.key}">
         <span class="mname">${m.name}${m.aka
           ? `<span class="aka">${m.aka}</span>` : ""}</span>
@@ -272,6 +271,15 @@ function buildList() {
   }
 }
 
+/** Apply the "Just the popular ones" toggle, staying on the same step. */
+function tPopular() {
+  const cur = steps()[T.step];
+  buildList();
+  const i = steps().indexOf(cur);
+  T.step = i >= 0 ? i : Math.min(T.step, steps().length - 1);
+  T.hoverMetric = null;
+}
+
 function hoverCell(k) {
   T.hoverCell = k;
   tDraw();
@@ -286,7 +294,7 @@ function setPreset(key) {
 }
 
 function setStep(i) {
-  T.step = clamp(i, 0, STEPS.length - 1);
+  T.step = clamp(i, 0, steps().length - 1);
   tDraw();
 }
 
@@ -302,7 +310,6 @@ function tDraw() {
   drawMosaicTab(x);
   drawStory(x);
   drawList(x);
-  drawVenn(x);
 }
 
 function drawTable(x) {
@@ -326,9 +333,9 @@ function drawTable(x) {
 }
 
 function drawMosaicTab(x) {
-  const svg = tEls.mosaic, b = MBOX, step = STEPS[T.step];
+  const svg = tEls.mosaic, b = MBOX, step = steps()[T.step];
   svg.replaceChildren();
-  svg.setAttribute("viewBox", "0 0 640 470");
+  svg.setAttribute("viewBox", "0 0 540 484");
   text("← Predict 0", { x: b.x0, y: 22, class: "axis-label" }, svg);
   text("Predict 1 →", { x: b.x1, y: 22, class: "axis-label",
     "text-anchor": "end" }, svg);
@@ -337,15 +344,15 @@ function drawMosaicTab(x) {
 
   // Row labels, kept apart when a row is thin.
   const ys = rows.map(r => r.y + r.h / 2);
-  ys[0] = clamp(ys[0], b.y0 + 22, b.y1 - 70);
-  ys[1] = clamp(Math.max(ys[1], ys[0] + 48), b.y0 + 70, b.y1 - 22);
-  if (ys[1] - ys[0] < 48) ys[0] = ys[1] - 48;
+  ys[0] = clamp(ys[0], b.y0 + 24, b.y1 - 90);
+  ys[1] = clamp(Math.max(ys[1], ys[0] + 66), b.y0 + 90, b.y1 - 34);
+  if (ys[1] - ys[0] < 66) ys[0] = ys[1] - 66;
   rows.forEach((r, i) => {
     const g = node("g", { class: `row-label r${i}` }, svg);
-    text(`Truth ${i}`, { x: b.x0 - 12, y: ys[i] - 10, class: "rl-head" }, g);
-    text(x.n[`t${i}`], { x: b.x0 - 12, y: ys[i] + 7, class: "rl-noun" }, g);
+    text(`Truth ${i}`, { x: b.x0 - 12, y: ys[i] - 14, class: "rl-head" }, g);
+    text(x.n[`t${i}`], { x: b.x0 - 12, y: ys[i] + 9, class: "rl-noun" }, g);
     text(`${num(r.n)} (${x.N ? pct(r.n / x.N) : "–"})`,
-      { x: b.x0 - 12, y: ys[i] + 24, class: "rl-count" }, g);
+      { x: b.x0 - 12, y: ys[i] + 32, class: "rl-count" }, g);
   });
 
   // Draggable dividers: between the rows (to scale only) and in each row.
@@ -375,18 +382,17 @@ function drawMosaicTab(x) {
 }
 
 function drawStory(x) {
-  const s = STEPS[T.step];
-  tEls["story-count"].textContent = `Tour ${T.step + 1} / ${STEPS.length}`;
+  const s = steps()[T.step];
+  tEls["story-count"].textContent = `Tour ${T.step + 1} / ${steps().length}`;
   tEls["story-title"].textContent = s.title;
   tEls["story-body"].innerHTML = s.text(x);
   tEls["story-back"].disabled = T.step === 0;
-  tEls["story-next"].disabled = T.step === STEPS.length - 1;
-  tEls["venn-card"].classList.toggle("active", !!s.venn);
+  tEls["story-next"].disabled = T.step === steps().length - 1;
 }
 
 function drawList(x) {
-  const active = T.hoverMetric || STEPS[T.step].hl;
-  const also = T.hoverMetric ? null : STEPS[T.step].also;
+  const active = T.hoverMetric || steps()[T.step].hl;
+  const also = T.hoverMetric ? null : steps()[T.step].also;
   for (const row of tEls.mlist.querySelectorAll(".mrow")) {
     const k = row.dataset.key, m = METRIC[k];
     row.classList.toggle("on", k === active);
@@ -399,70 +405,6 @@ function drawList(x) {
   for (const el of tEls.mlist.querySelectorAll("[data-val]")) {
     el.textContent = metricText(el.dataset.val, x.m[el.dataset.val]);
   }
-}
-
-// ------------------------------------------------------------------- Venn
-
-/** Area of the overlap of circles of radii r1, r2 with centers d apart. */
-function lensArea(d, r1, r2) {
-  if (d >= r1 + r2) return 0;
-  if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
-  const a = r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1));
-  const b = r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2));
-  const k = 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2)
-    * (d + r1 + r2));
-  return a + b - k;
-}
-
-/**
- * Circle A = the true 1s, circle B = the predicted 1s, overlap TP, areas
- * to scale with each other. The center distance solves lensArea = TP by
- * bisection (the overlap shrinks as the circles move apart).
- */
-function drawVenn(x) {
-  const svg = tEls.venn, c = x.c;
-  svg.replaceChildren();
-  svg.setAttribute("viewBox", "0 0 360 228");
-  node("rect", { x: 4, y: 4, width: 352, height: 220, rx: 10,
-    class: "venn-all" }, svg);
-  text(`${CELL_LABEL.tn} ${num(c.tn)}: outside both`, { x: 16, y: 214,
-    class: "venn-tn" }, svg);
-  const A = c.fn + c.tp, B = c.fp + c.tp, big = Math.max(A, B);
-  if (!big) {
-    tEls["venn-note"].textContent = "Both sets are empty: F1 is undefined.";
-    return;
-  }
-  const R = 70, scale = Math.PI * R * R / big;
-  const ra = Math.sqrt(A * scale / Math.PI);
-  const rb = Math.sqrt(B * scale / Math.PI);
-  let lo = Math.abs(ra - rb), hi = ra + rb;
-  for (let i = 0; i < 60; i++) {
-    const mid = (lo + hi) / 2;
-    if (lensArea(mid, ra, rb) > c.tp * scale) lo = mid;
-    else hi = mid;
-  }
-  const d = c.tp ? (lo + hi) / 2 : ra + rb + 8;
-  const ax = 180 - (ra + d + rb) / 2 + ra, bx = ax + d, cy = 108;
-  if (ra) node("circle", { cx: ax, cy, r: ra, class: "venn-a" }, svg);
-  if (rb) node("circle", { cx: bx, cy, r: rb, class: "venn-b" }, svg);
-  text(`A: Truth 1 (${num(A)})`, { x: 16, y: 24, class: "venn-set a" },
-    svg);
-  text(`B: Predict 1 (${num(B)})`, { x: 344, y: 24, class: "venn-set b",
-    "text-anchor": "end" }, svg);
-  const lab = (k, lx) => text(CELL_LABEL[k], { x: lx, y: cy + 5,
-    class: `cell-name ${k}` }, svg);
-  if (c.tp) {
-    const inside = d <= Math.abs(ra - rb) + 1e-6;
-    lab("tp", inside ? (ra < rb ? ax : bx)
-      : ((bx - rb) + Math.min(ax + ra, bx + rb)) / 2);
-  }
-  if (c.fn && ra > 12) lab("fn", ax - ra * 0.55);
-  if (c.fp && rb > 12) lab("fp", bx + rb * 0.55);
-  const dice = (A + B) ? 2 * c.tp / (A + B) : NaN;
-  tEls["venn-note"].innerHTML = `Dice = ${fracHTML("2 · |A ∩ B|",
-    "|A| + |B|")} = ${fracHTML(`2 · ${num(c.tp)}`,
-    `${num(A)} + ${num(B)}`)} = <b>${metricText("f1", dice)}</b> = F1.
-    The circles are to scale with each other; the box (everyone) is not.`;
 }
 
 // ------------------------------------------------------------ dragging

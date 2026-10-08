@@ -1,9 +1,11 @@
-// ROC curve tab. Each sample gets a score; scores of Truth 0 samples are
+// Summary metrics tab: AUC over every threshold and F1 at one. Each
+// sample gets a score; scores of Truth 0 samples are
 // drawn from N(-sep/2, 1) and of Truth 1 samples from N(sep/2, 1). The
 // classifier predicts 1 when score >= threshold t. The strip shows the
 // scores (one band per true class) split by t into the four cells; the
 // ROC plot (FPR, TPR) and the PR plot (recall, precision) trace the
-// threshold as it moves. Lowering t past a Truth 1 sample steps the ROC
+// threshold as it moves, and the Venn diagram shows F1 (Dice) at the
+// current threshold. Lowering t past a Truth 1 sample steps the ROC
 // staircase up, past a Truth 0 sample right.
 
 const SCORE = [-5.2, 5.2];
@@ -16,12 +18,11 @@ const R = {
   n: 40,
   prev: 0.5,
   sep: 1.5,
-  // Sign of the noise: Flip scores negates it along with sep, so every
+  // Sign of the noise: Estimate backwards negates it along with sep, so every
   // score changes sign.
   sign: 1,
   seed: 1,
   thr: 0.4,
-  whole: false,
   pairs: false,
   sweep: null,
   // Hovered pair cell { i, j } (i-th highest Truth 1, j-th highest
@@ -85,9 +86,9 @@ function currentK() { return order.filter(o => o.s >= R.thr).length; }
 
 function rBuild() {
   for (const id of ["strip", "rocplot", "prplot", "r-n", "r-nval",
-    "r-prev", "r-prevval", "r-sep", "r-sepval", "r-whole", "r-pairs",
+    "r-prev", "r-prevval", "r-sep", "r-sepval", "r-pairs",
     "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend",
-    "r-pair-note"]) {
+    "r-pair-note", "r-venn", "r-venn-note", "r-f1"]) {
     rEls[id] = document.getElementById(id);
   }
   const slider = (id, key) => {
@@ -109,10 +110,6 @@ function rBuild() {
   slider("r-n", "n");
   slider("r-prev", "prev");
   slider("r-sep", "sep");
-  rEls["r-whole"].onchange = () => {
-    R.whole = rEls["r-whole"].checked;
-    rDraw();
-  };
   rEls["r-pairs"].onchange = () => {
     R.pairs = rEls["r-pairs"].checked;
     R.pair = null;
@@ -171,12 +168,16 @@ function rDraw() {
   rEls["r-sepval"].textContent = `${fmt(R.sep, 1)} (mean of Truth 1 minus `
     + `mean of Truth 0)`;
   rEls["r-sweep"].textContent = R.sweep ? "■ Stop" : "▶ Sweep";
+  rEls["r-flip"].textContent = R.sign > 0 ? "Estimate backwards"
+    : "Undo backwards";
   rEls["r-pair-note"].hidden = !R.pairs;
   const c = rCounts(), k = currentK();
   drawStrip(c);
   drawRoc(k);
   drawPr(k);
   rReadout(c, k);
+  rEls["r-f1"].innerHTML = formulaHTML("f1", c);
+  drawVenn(rEls["r-venn"], rEls["r-venn-note"], c);
 }
 
 /**
@@ -324,7 +325,7 @@ function drawRoc(k) {
       node("rect", { x: px(R.pair.j / Q), y: py((R.pair.i + 1) / P),
         width: w, height: h, class: "pair-cell" }, svg);
     }
-  } else if (R.whole) {
+  } else {
     node("path", { d: pathOf(verts) + `L${px(1)} ${py(0)}Z`,
       class: "auc-fill" }, svg);
   }
@@ -334,17 +335,13 @@ function drawRoc(k) {
     class: "chance" }, svg);
   text("guessing", { x: px(0.62), y: py(0.56), class: "chance-label",
     transform: `rotate(-45 ${px(0.62)} ${py(0.56)})` }, svg);
-  if (R.whole || R.pairs) {
-    node("path", { d: pathOf(verts), class: "curve-all" }, svg);
-  }
+  node("path", { d: pathOf(verts), class: "curve-all" }, svg);
   node("path", { d: pathOf(verts.slice(0, k + 1)), class: "curve-traced" },
     svg);
   const [x, y] = verts[k];
   node("circle", { cx: px(x), cy: py(y), r: 6.5, class: "cur" }, svg);
-  if (R.whole || R.pairs) {
-    text(`AUC = ${auc.toFixed(2)}`, { x: px(0.97), y: py(0.04),
-      class: "auc-label", "text-anchor": "end" }, svg);
-  }
+  text(`AUC = ${auc.toFixed(3)}`, { x: px(0.97), y: py(0.04),
+    class: "auc-label", "text-anchor": "end" }, svg);
 }
 
 function prPoints() {
@@ -366,9 +363,7 @@ function drawPr(k) {
     class: "chance" }, svg);
   text(`guessing: precision = prevalence = ${pct(base)}`, { x: px(0.98),
     y: py(base) - 6, class: "chance-label", "text-anchor": "end" }, svg);
-  if (R.whole || R.pairs) {
-    node("path", { d: pathOf(pts), class: "curve-all" }, svg);
-  }
+  node("path", { d: pathOf(pts), class: "curve-all" }, svg);
   if (k >= 1) {
     node("path", { d: pathOf(pts.slice(0, k)), class: "curve-traced" }, svg);
     const [x, y] = pts[k - 1];
@@ -397,7 +392,6 @@ function rReadout(c, k) {
     ${row("TPR (recall)", pct(m.tpr))}
     ${row("FPR", pct(m.fpr))}
     ${row("Precision", pct(m.ppv))}
-    ${row("F1", metricText("f1", m.f1))}
     ${row("Accuracy", pct(m.acc))}
     <h3>Over every threshold</h3>
     ${row("AUC", auc.toFixed(3))}
@@ -406,8 +400,8 @@ function rReadout(c, k) {
       AUC = ${num(good)} / ${num(P * Q)}.</p>
     ${verts[k][1] < verts[k][0] ? `<p class="warn">This point is below the
       diagonal: worse than guessing. Predicting the opposite would land at
-      (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try Flip
-      scores.</p>` : ""}`;
+      (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try Estimate
+      backwards.</p>` : ""}`;
 }
 
 // ------------------------------------------------------------ interaction

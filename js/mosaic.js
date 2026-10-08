@@ -63,11 +63,11 @@ function drawMosaic(parent, c, b, opt = {}) {
       }
       if (!opt.labels || w < 30 || row.h < 18) return;
       const cx = x + w / 2, cy = row.y + row.h / 2;
-      const two = row.h >= 44 && w >= 44;
-      text(CELL_LABEL[k], { x: cx, y: two ? cy - 4 : cy + 5,
+      const two = row.h >= 50 && w >= 44;
+      text(CELL_LABEL[k], { x: cx, y: two ? cy - 6 : cy + 6,
         class: `cell-name ${k} ${st}` }, labels);
       if (two) {
-        text(num(c[k]), { x: cx, y: cy + 17, class: `cell-count ${st}` },
+        text(num(c[k]), { x: cx, y: cy + 20, class: `cell-count ${st}` },
           labels);
       }
     });

@@ -3,7 +3,8 @@
 // classifiers each described by two clues in different terms. One clue is
 // always about a row (TPR, FNR, FN, TNR, FPR or FP), so it fills one cell;
 // the other fills a second; together they give the whole matrix. After a
-// pick, the reveal shows both matrices and that derivation.
+// pick, the reveal shows both matrices and that derivation. Under "Just
+// the popular ones" the clues are TPR, FPR, precision, accuracy and counts.
 
 const SCENARIOS = [
   { title: "Strep throat", N: 1000, prev: [0.25, 0.4],
@@ -34,9 +35,6 @@ const SCENARIOS = [
 
 // Each goal's loss (lower is better) and its value as shown.
 const GOALS = {
-  f1: { text: () => "Pick the one with the higher F1 score.",
-    loss: c => 1 - metricValue("f1", c),
-    show: c => `F1 = ${metricValue("f1", c).toFixed(3)}` },
   acc: { text: () => "Pick the one that makes fewer mistakes overall "
       + "(higher accuracy).",
     loss: c => c.fp + c.fn,
@@ -90,12 +88,11 @@ const CLUES = {
     plain: (v, s) => `right about ${v} of all ${s.pop}` },
   flag: { fam: "Q", name: "Flagged (TP + FP)", count: "flag",
     plain: (v, s, N) => `flags ${v} of every ${num(N)} ${s.pop}` },
-  f1: { fam: "F1", name: "F1 score (Dice)", rate: "f1",
-    plain: () => "harmonic mean of precision and recall" },
 };
+const POPULAR_CLUES = ["tpr", "fn", "fpr", "fp", "ppv", "acc", "flag"];
 
 // Clues that would hand over the goal directly.
-const EXCLUDE = { f1: ["f1"], acc: ["acc"], ppv: ["ppv", "fdr"],
+const EXCLUDE = { acc: ["acc"], ppv: ["ppv", "fdr"],
   tpr: ["tpr", "fnr", "fn"], fpr: ["fpr", "tnr", "fp"], cost: [] };
 
 const G = { round: null, right: 0, played: 0, streak: 0, hint: false };
@@ -110,24 +107,23 @@ function clueValue(type, c) {
   if (k.count === "flag") return c.tp + c.fp;
   if (k.count) return c[k.count];
   const v = metricValue(k.rate, c);
-  return type === "f1" ? Math.round(v * 100) / 100
-    : Math.round(v * 1000) / 1000;
+  return Math.round(v * 1000) / 1000;
 }
 
 function clueText(type, c) {
   const v = clueValue(type, c);
-  if (CLUES[type].count) return num(v);
-  return type === "f1" ? v.toFixed(2) : pct(v);
+  return CLUES[type].count ? num(v) : pct(v);
 }
 
 function pickClues(goal, avoid) {
   const ok = Object.keys(CLUES).filter(t => !EXCLUDE[goal].includes(t)
-    && !avoid.includes(t));
+    && !avoid.includes(t)
+    && (!SETTINGS.popular || POPULAR_CLUES.includes(t)));
   const row = ok.filter(t => ["R", "F"].includes(CLUES[t].fam));
   if (!row.length) return null;
   const a = pick(row);
   const rest = ok.filter(t => CLUES[t].fam !== CLUES[a].fam);
-  // Favor a column, accuracy, flag or F1 clue as the second.
+  // Favor a column, accuracy or flag clue as the second.
   const off = rest.filter(t => !["R", "F"].includes(CLUES[t].fam));
   const b = off.length && gr() < 0.75 ? pick(off) : pick(rest);
   return [a, b];
@@ -230,8 +226,6 @@ function deriveHTML(o, rd) {
         + `${n(c.tp + c.tn)}, so TN ≈ ${n(c.tn)} and FP = ${n(c.fp)}.`,
       flag: () => `TP + FP = ${X}, so FP = ${X} − ${n(c.tp)} = ${n(c.fp)} `
         + `and ${rest0}`,
-      f1: () => `F1 ${X} = 2TP / (2TP + FP + FN): FP = 2TP / F1 − 2TP − FN `
-        + `≈ ${n(c.fp)}, so ${rest0}`,
     };
     L.push(f[x]());
   } else {
@@ -245,8 +239,6 @@ function deriveHTML(o, rd) {
       acc: () => `Accuracy ${X}: TP + TN = ${X} × ${n(N)} ≈ `
         + `${n(c.tp + c.tn)}, so ${rest1}`,
       flag: () => `TP + FP = ${X}, so ${rest1}`,
-      f1: () => `F1 ${X}, with FN = P − TP: F1 = 2TP / (TP + FP + P), so `
-        + `TP = F1 × (FP + P) / (2 − F1) ≈ ${n(c.tp)}, FN = ${n(c.fn)}.`,
     };
     L.push(f[x]());
   }
@@ -290,11 +282,15 @@ function gBuild() {
     G.hint = !G.hint;
     gDraw();
   };
-  gEls["g-cheat"].innerHTML = METRICS.map(m => `<div class="mrow cheat">
-    <span class="mname">${m.name}${m.aka
+  gCheat();
+  newRound();
+}
+
+function gCheat() {
+  gEls["g-cheat"].innerHTML = shownMetrics().map(m => `<div class="mrow
+    cheat"><span class="mname">${m.name}${m.aka
       ? `<span class="aka">${m.aka}</span>` : ""}</span>
     <span class="mdef">${defHTML(m.key)}</span></div>`).join("");
-  newRound();
 }
 
 function newRound() {

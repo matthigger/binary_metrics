@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Binary metrics, visually</title>
-  <meta name="description" content="Edit a confusion matrix and watch every
-    binary classification metric update, drag a threshold to trace the ROC
-    curve, and pick between classifiers in a would-you-rather game.">
+  <meta name="description" content="Edit a confusion matrix and watch the
+    binary classification metrics update, drag a threshold to trace the ROC
+    curve and F1, and pick between classifiers in a would-you-rather
+    game.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='15' height='15' rx='2' fill='%23bfdbfe'/%3E%3Crect x='18' y='3' width='11' height='15' rx='2' fill='%232563eb'/%3E%3Crect x='3' y='18' width='6' height='11' rx='2' fill='%23ea580c'/%3E%3Crect x='9' y='18' width='20' height='11' rx='2' fill='%23fed7aa'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -44,9 +45,13 @@
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-mode="table">Confusion
         matrix</button>
-      <button class="tab" role="tab" data-mode="roc">ROC curve</button>
+      <button class="tab" role="tab" data-mode="roc">Summary
+        metrics</button>
       <button class="tab" role="tab" data-mode="game">Would you
         rather?</button>
+      <label class="check popular" data-show="table game"
+        title="Show only prevalence, accuracy, TPR, FPR and precision"><input
+        type="checkbox" id="popular" checked> Just the popular ones</label>
     </nav>
   </header>
 
@@ -55,7 +60,7 @@
     <div>
       <h2>The confusion matrix</h2>
       <p class="goal"><b>Goal:</b> describe how well a binary classifier
-        (here, a medical test) does, with a number that answers the
+        (a coin flip, a medical test) does, with a number that answers the
         question you care about.</p>
       <p class="goal approach"><b>Approach:</b> count the samples in each
         of the four cells: truth (row) by prediction (column). Every metric
@@ -75,48 +80,35 @@
       <p class="muted">Edit any count in the table, or drag the lines in
         the mosaic (the total stays fixed). Hover a metric to light up its
         numerator (filled) and denominator (outlined); hover a cell to see
-        which metrics use it.</p>
+        which metrics use it. Step through the tour with <em>Next</em> or
+        the arrow keys.</p>
     </div>
     <div>
       <h3>Try this</h3>
       <ul class="try">
-        <li>Step through the tour with <em>Next</em> or the arrow
-          keys.</li>
-        <li>Pick <em>Mammogram</em>. A woman's mammogram is positive: how
-          likely is it that she has cancer? Guess before you look at
-          precision.
-          <details class="answer"><summary>Answer</summary>About 9%. The
-            990 women without cancer, at a 9% false alarm rate, give 89
-            false positives, swamping the 9 true positives. A rare
-            condition makes most positives false, even for a good
-            test.</details>
+        <li>Start by changing the prevalence: edit the counts in the table
+          (move samples from the Truth 0 row to the Truth 1 row), or drag
+          the line between the rows of the mosaic. Which metrics move, and
+          which stay put?
+          <details class="answer"><summary>Answer</summary>Dragging keeps
+            each row's split, so TPR and FPR stay put: each uses only one
+            true class. Prevalence and precision move, since precision mixes
+            the two rows. On <em>Coin flip</em>, precision simply equals the
+            prevalence and accuracy stays at 50%: the coin is right half the
+            time in either row. On <em>Strep test</em>, accuracy moves
+            too.</details>
         </li>
-        <li>Pick <em>Always say no</em>. Its accuracy beats the
-          mammogram's. Which metrics expose it?
-          <details class="answer"><summary>Answer</summary>TPR is 0%: it
-            catches no one. Balanced accuracy is 50%, F1 is 0 and
-            precision is undefined (0 / 0), since it never predicts
-            1.</details>
-        </li>
-        <li>On <em>Strep test</em>, drag the line between the rows. Which
-          metrics stay put?
-          <details class="answer"><summary>Answer</summary>The row ratios
-            (TPR, FNR, TNR, FPR): each uses only one true class.
-            Prevalence, accuracy and the column ratios (precision, NPV)
-            move.</details>
-        </li>
-        <li>Raise TN from 601 to 6,000. Which metrics change?
-          <details class="answer"><summary>Answer</summary>Only those
-            whose formula contains TN: accuracy, prevalence, TNR, FPR, NPV,
-            FOR and balanced accuracy. TPR, precision and F1 do not use TN,
-            so they do not move.</details>
-        </li>
-        <li>Build a table with precision 100% but recall 10%. What kind of
-          test is it?
-          <details class="answer"><summary>Answer</summary>For example
-            TP&nbsp;=&nbsp;37, FP&nbsp;=&nbsp;0, FN&nbsp;=&nbsp;333: a
-            cautious test that flags only the sure cases. Every flag is
-            right, but it misses most of the positives.</details>
+        <li>On <em>Mammogram</em>, you can raise either TPR or TNR by one
+          percentage point. Which would you rather raise to improve
+          accuracy?
+          <details class="answer"><summary>Answer</summary>TNR, by far.
+            Accuracy = prevalence &times; TPR + (1 &minus; prevalence)
+            &times; TNR, so each row counts in proportion to its size. One
+            more point of TPR helps 1% of 10 women (0.1 more right; accuracy
+            +0.01 points); one more point of TNR helps 1% of 990 (9.9 more
+            right; +0.99 points), 99 times as much. Accuracy barely notices
+            the rare class, even though a missed cancer is the costlier
+            mistake.</details>
         </li>
       </ul>
     </div>
@@ -124,11 +116,13 @@
 
   <main class="panel" data-show="table">
     <div class="stage card">
-      <div id="cm-table"></div>
-      <svg id="mosaic" aria-label="confusion matrix mosaic"></svg>
-      <p class="hint">Mosaic: each row is a true class (height &prop; its
-        count), split by the prediction, so area &prop; count. Hatched
-        cells are mistakes. Drag a line to move samples between
+      <div class="cm-wrap">
+        <div id="cm-table"></div>
+        <svg id="mosaic" aria-label="confusion matrix mosaic"></svg>
+      </div>
+      <p class="hint">Mosaic (right): each row is a true class (height
+        &prop; its count), split by the prediction, so area &prop; count.
+        Hatched cells are mistakes. Drag a line to move samples between
         cells.</p>
       <p class="muted" id="t-source"></p>
     </div>
@@ -160,22 +154,17 @@
         <div id="mlist" class="mlist"></div>
       </div>
 
-      <div class="card" id="venn-card">
-        <h3>F1 = Dice: the overlap of two sets</h3>
-        <svg id="venn" aria-label="Venn diagram of the true and predicted
-          positives"></svg>
-        <p class="muted" id="venn-note"></p>
-      </div>
     </aside>
   </main>
 
-  <!-- ===================================================== ROC curve -->
+  <!-- =============================================== Summary metrics -->
   <section class="intro card" data-show="roc">
     <div>
-      <h2>The ROC curve</h2>
-      <p class="goal"><b>Goal:</b> summarize a classifier over every
-        threshold, not just one: the whole trade-off between catching the
-        1s (TPR) and false alarms on the 0s (FPR).</p>
+      <h2>Summary metrics</h2>
+      <p class="goal"><b>Goal:</b> boil a classifier down to one number.
+        AUC summarizes the whole trade-off between catching the 1s (TPR)
+        and false alarms on the 0s (FPR) over every threshold; F1 (Dice)
+        combines precision and recall at one threshold.</p>
       <p class="goal approach"><b>Approach:</b> a classifier gives each
         sample a score (<i>c</i>&nbsp;&middot;&nbsp;<i>x</i> for the
         perceptron or LDA, &sigma;(<i>c</i>&nbsp;&middot;&nbsp;<i>x</i>)
@@ -185,6 +174,11 @@
         ROC curve.</p>
       <div class="formula">AUC = area under the ROC curve =
         P(a random Truth 1 sample outscores a random Truth 0 sample)</div>
+      <div class="formula">F1 = harmonic mean of precision and recall =
+        <span class="frac"><span>2 &middot; <span class="chip
+          tp">TP</span></span><span>2 &middot; <span class="chip
+          tp">TP</span> + <span class="chip fp">FP</span> + <span
+          class="chip fn">FN</span></span></span> = Dice</div>
       <p class="muted">Lowering <i>t</i> past a Truth 1 sample steps the
         curve up (one more TP); past a Truth 0 sample, right (one more FP).
         The scores here are drawn from two normal distributions whose means
@@ -208,9 +202,9 @@
             guessing.</details>
         </li>
         <li>Make the separation negative: the curve sinks below the
-          diagonal. Now press <em>Flip scores</em>.
+          diagonal. Now press <em>Estimate backwards</em>.
           <details class="answer"><summary>Answer</summary>Worse than
-            guessing is useful: predict the opposite. Flipping every score
+            guessing is useful: predict the opposite. Negating every score
             mirrors each point (FPR, TPR) to (1 &minus; FPR, 1 &minus; TPR)
             and turns AUC into 1 &minus; AUC.</details>
         </li>
@@ -222,13 +216,21 @@
             height under the curve is the number of Truth 1 samples that
             outscore that Truth 0 sample.</details>
         </li>
-        <li>Turn on <em>Show whole curves</em> and move the prevalence from
-          50% to 5%. Which curve keeps its shape: ROC or PR?
+        <li>Move the prevalence from 50% to 5%. Which curve keeps its
+          shape: ROC or PR?
           <details class="answer"><summary>Answer</summary>ROC: TPR and FPR
             each use one true class, so prevalence does not enter (the
             wiggles are sampling noise). Precision mixes the classes: with
             few Truth 1s the PR curve sinks toward the 5% guessing
             line.</details>
+        </li>
+        <li>Set the prevalence to 10%. Find the threshold with the largest
+          F1, then the one with the highest accuracy. Are they the same?
+          <details class="answer"><summary>Answer</summary>Usually not.
+            With few Truth 1s, accuracy is best when nearly everything is
+            predicted 0, since every true negative counts. F1 ignores the
+            true negatives (outside both circles of the Venn diagram), so it
+            prefers a lower threshold that catches more of the 1s.</details>
         </li>
         <li>Where would you put the threshold for a strep test? For a spam
           filter?</li>
@@ -261,20 +263,25 @@
         <label class="slider"><span>Separation</span>
           <input type="range" id="r-sep">
           <span id="r-sepval" class="val"></span></label>
-        <label class="check"><input type="checkbox" id="r-whole"> Show
-          whole curves</label>
         <label class="check"><input type="checkbox" id="r-pairs"> AUC as
           pairs</label>
         <div class="buttons">
           <button id="r-sweep" title="Lower the threshold from above every
             score to below every score"></button>
-          <button id="r-flip" title="Negate every score">Flip
-            scores</button>
+          <button id="r-flip" title="Negate every score: predict 1 where
+            the classifier says 0"></button>
           <button id="r-resample" title="Draw new scores">&#8635;
             Resample</button>
         </div>
       </div>
       <div class="card readout" id="r-readout"></div>
+      <div class="card">
+        <h3>F1 = Dice: the overlap of two sets</h3>
+        <div id="r-f1"></div>
+        <svg id="r-venn" aria-label="Venn diagram of the true and predicted
+          positives at this threshold"></svg>
+        <p class="muted" id="r-venn-note"></p>
+      </div>
     </aside>
   </main>
 
@@ -340,6 +347,7 @@
   <script src="js/util.js"></script>
   <script src="js/metrics.js"></script>
   <script src="js/mosaic.js"></script>
+  <script src="js/venn.js"></script>
   <script src="js/table.js"></script>
   <script src="js/roc.js"></script>
   <script src="js/game.js"></script>
