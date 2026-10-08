@@ -1,7 +1,8 @@
 # binary_metrics
 
-Interactive teaching demo of binary classification metrics: every one is a
-ratio of counts from the 2 × 2 confusion matrix. Three tabs:
+Interactive teaching demo of binary classification metrics: many are
+ratios of counts from the 2 × 2 confusion matrix (AUC, over every
+threshold, is not). Three tabs:
 
 - **Confusion matrix.** A coin flip (equal priors, chance accuracy), a
   rapid strep test on 1,000 children and a mammogram screen. Edit the four
