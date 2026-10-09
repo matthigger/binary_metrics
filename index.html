@@ -148,10 +148,12 @@
       <ul class="try">
         <li>Press <em>Sweep</em>, or drag the threshold from right to left.
           Why does the curve only ever move up or right?
-          <details class="answer"><summary>Answer</summary>Lowering
-            <i>t</i> only adds samples to the red side. Each added sample is
-            a Truth 1 (TP + 1: up by 1 / #Truth 1) or a Truth 0 (FP + 1:
-            right by 1 / #Truth 0).</details>
+          <details class="answer"><summary>Answer</summary>Moving the
+            threshold left only turns blue estimates red, never the reverse.
+            A Truth 1 sample turning red is one more catch, so TPR rises: the
+            curve steps up. A Truth 0 sample turning red is one more false
+            alarm, so FPR rises: the curve steps right. Neither rate can
+            ever fall.</details>
         </li>
         <li>Set the separation to 0. Where does the curve go?
           <details class="answer"><summary>Answer</summary>Near the
