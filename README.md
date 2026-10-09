@@ -6,15 +6,14 @@ Interactive teaching demo of binary classification metrics: many are
 ratios of counts from the 2 × 2 confusion matrix (AUC, over every
 threshold, is not). Three tabs:
 
-- **Confusion matrix.** A coin flip (guessing heads or tails: chance
-  accuracy), a rapid strep test on 1,000 children and a mammogram screen.
-  Edit the four counts in the table, or drag the dividers of the mosaic beside it (rows
-  = truth, height ∝ class count, split by the prediction, so area ∝ count;
-  the total stays fixed). A tour highlights each metric's numerator
-  (filled) and denominator (outlined). "Just the popular ones" (on by
-  default) limits this tab and the game to prior, accuracy, TPR, FPR
-  and precision; off, it adds FNR, TNR, FDR, NPV, FOR and balanced
-  accuracy.
+- **Confusion matrix.** A coin flip (guessing heads or tails: chance accuracy),
+  a rapid strep test on 1,000 children and a mammogram screen. Edit the four
+  counts in the table, or drag the dividers of the mosaic beside it (rows =
+  truth, height ∝ class count, split by the prediction, so area ∝ count; the
+  total stays fixed). A tour highlights each metric's numerator (filled) and
+  denominator (outlined). "Just the popular ones" (on by default) limits this
+  tab and the game to prior, accuracy, TPR, FPR and precision; off, it adds
+  FNR, TNR, FDR, NPV, FOR and balanced accuracy.
 - **ROC curve.** One number that needs no threshold: AUC. Scores of each
   class are drawn from two normals (separation, prior and sample count
   are sliders). Drag the threshold on the score strip, shaded estimated
