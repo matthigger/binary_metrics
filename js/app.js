@@ -52,7 +52,7 @@ document.addEventListener("keydown", e => {
 })();
 
 tBuild();
-setPreset("strep");
+setPreset("stress");
 rBuild();
 gBuild();
 setMode(location.hash === "#summary-metrics" ? "roc"
