@@ -24,6 +24,7 @@
   --roc-pale: #ede9fe;
   /* A hovered metric's numerator and the rest of its denominator. */
   --hl-num: #9aa1ad;
+  --hl-out: #f1f2f4;
   --hl-edge: #c9cdd4;
   --no-ink: #b91c1c;
   --no-pale: #fef2f2;
@@ -358,8 +359,11 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .cell.dim, .cell-name.dim, .cell-count.dim { opacity: .3; }
 /* A metric's highlight is all grey: numerator filled, the denominator
    framed in ink (.den-frame), no class colors while it shows. */
-.cell.grey { stroke: var(--hl-edge); fill: #fff; }
+.cell.grey { stroke: none; fill: #fff; }
 .cell.grey.num { fill: var(--hl-num); }
+.cell.grey.dim { fill: var(--hl-out); opacity: 1; }
+#mosaic .rl-box.plain { fill: var(--hl-out); }
+#mosaic .cl-box.plain { stroke: var(--hl-edge); }
 .cell.sliver.grey { fill: var(--hl-edge); }
 .cell.sliver.grey.num { fill: var(--hl-num); }
 .den-frame {
@@ -429,8 +433,11 @@ table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
 table.cm td.cm-cell.num.fn, table.cm td.cm-cell.num.tp {
   background: var(--c1-strong);
 }
-table.cm td.cm-cell.grey { border-color: var(--hl-edge); background: #fff; }
+table.cm td.cm-cell.grey { border-color: transparent; background: #fff; }
 table.cm td.cm-cell.grey.num { background: var(--hl-num); }
+table.cm td.cm-cell.grey.dim { background: var(--hl-out); opacity: .55; }
+#cm-table.plain th.rl { background: var(--hl-out); }
+#cm-table.plain th.cl { border-color: var(--hl-edge); }
 #cm-table { position: relative; }
 #cm-table .den-frame {
   position: absolute;

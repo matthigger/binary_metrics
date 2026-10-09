@@ -112,15 +112,38 @@ function denFrame(parent, spans, g) {
   const o = Math.max(0.5, g / 2 - 2);
   const [s0, s1] = spans, top = s0.row.y + o;
   const L = s => s.a + o, R = s => s.b - o;
-  let d;
-  if (!s1) {
-    d = `M${L(s0)},${top} H${R(s0)} V${s0.row.y + s0.row.h - o} H${L(s0)} Z`;
-  } else {
-    const mid = s1.row.y, bot = s1.row.y + s1.row.h - o;
-    d = `M${L(s0)},${top} H${R(s0)} V${mid} H${R(s1)} V${bot} H${L(s1)}`
-      + ` V${mid} H${L(s0)} Z`;
+  const last = s1 || s0, mid = s1 ? s1.row.y : null;
+  const bot = last.row.y + last.row.h - o;
+  const pts = s1
+    ? [[L(s0), top], [R(s0), top], [R(s0), mid], [R(s1), mid], [R(s1), bot],
+      [L(s1), bot], [L(s1), mid], [L(s0), mid]]
+    : [[L(s0), top], [R(s0), top], [R(s0), bot], [L(s0), bot]];
+  node("path", { d: roundedPath(pts, 9), class: "den-frame" }, parent);
+}
+
+/**
+ * Closed path through the corners pts, each rounded with radius up to r
+ * (less where an edge is short); repeated and in-line points are dropped.
+ */
+function roundedPath(pts, r) {
+  const same = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) < 1e-6;
+  let P = pts.filter((p, i) => !same(p, pts[(i + 1) % pts.length]));
+  P = P.filter((p, i) => {
+    const a = P[(i + P.length - 1) % P.length], b = P[(i + 1) % P.length];
+    return Math.abs((p[0] - a[0]) * (b[1] - p[1])
+      - (p[1] - a[1]) * (b[0] - p[0])) > 1e-6;
+  });
+  const n = P.length, at = (p, q, t) => [p[0] + (q[0] - p[0]) * t,
+    p[1] + (q[1] - p[1]) * t];
+  const len = (p, q) => Math.hypot(q[0] - p[0], q[1] - p[1]);
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const a = P[(i + n - 1) % n], v = P[i], b = P[(i + 1) % n];
+    const k = Math.min(r, len(a, v) / 2, len(v, b) / 2);
+    const p = at(v, a, k / len(a, v)), q = at(v, b, k / len(v, b));
+    d += `${i ? "L" : "M"}${p[0]},${p[1]} Q${v[0]},${v[1]} ${q[0]},${q[1]} `;
   }
-  node("path", { d, class: "den-frame" }, parent);
+  return d + "Z";
 }
 
 // Truth (row) and estimate (column) of each cell.

@@ -246,6 +246,7 @@ function drawTable(x) {
     td.className = `cm-cell ${td.dataset.cell} ${
       cellState(td.dataset.cell, hl)}`;
   }
+  root.classList.toggle("plain", !!(hl && hl.grey));
   tableFrame(root, hl);
 }
 
@@ -271,7 +272,10 @@ function tableFrame(root, hl) {
 }
 
 function drawMosaicTab(x) {
-  const svg = tEls.mosaic, b = MBOX;
+  const svg = tEls.mosaic, b = MBOX, hl = tHighlight();
+  // A metric's highlight strips the picture to its fraction: plain labels,
+  // no dividers to drag.
+  const plain = hl && hl.grey ? " plain" : "";
   svg.replaceChildren();
   svg.setAttribute("viewBox", "0 0 540 508");
   // Column labels at the left and right ends, since each row splits at
@@ -280,13 +284,13 @@ function drawMosaicTab(x) {
   [b.x0 + 2, b.x1 - 2 - cw].forEach((x0, i) => {
     const g = node("g", { class: "col-label" }, svg);
     node("rect", { x: x0, y: 2, width: cw, height: 50, rx: 8,
-      class: `cl-box e${i}` }, g);
+      class: `cl-box e${i}${plain}` }, g);
     text(i ? "Predict 1 →" : "← Predict 0",
       { x: x0 + cw / 2, y: 24, class: "rl-head" }, g);
     text(x.n[`p${i}`], { x: x0 + cw / 2, y: 45, class: "rl-noun" }, g);
   });
-  const rows = drawMosaic(svg, x.c, b, { toScale: T.toScale,
-    hl: tHighlight(), labels: true, gap: 7, edge: 5.5 });
+  const rows = drawMosaic(svg, x.c, b, { toScale: T.toScale, hl,
+    labels: true, gap: 7, edge: 5.5 });
 
   // Row labels, kept apart when a row is thin.
   const ys = rows.map(r => r.y + r.h / 2), d = 92;
@@ -296,7 +300,7 @@ function drawMosaicTab(x) {
   rows.forEach((r, i) => {
     const g = node("g", { class: "row-label" }, svg), cx = (b.x0 - 4) / 2;
     node("rect", { x: 2, y: ys[i] - 43, width: b.x0 - 8, height: 86, rx: 8,
-      class: `rl-box t${i}` }, g);
+      class: `rl-box t${i}${plain}` }, g);
     text(`Truth ${i}`, { x: cx, y: ys[i] - 16, class: "rl-head" }, g);
     text(x.n[`t${i}`], { x: cx, y: ys[i] + 7, class: "rl-noun" }, g);
     text(`${num(r.n)} (${x.N ? pct(r.n / x.N) : "–"})`,
@@ -304,6 +308,7 @@ function drawMosaicTab(x) {
   });
 
   // Draggable dividers: between the rows (to scale only) and in each row.
+  if (plain) return;
   if (T.toScale) {
     const y = rows[1].y;
     const g = node("g", { class: "handle row", "data-handle": "row" }, svg);
