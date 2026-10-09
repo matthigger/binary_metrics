@@ -3,8 +3,8 @@
 // row is one true class, its height proportional to the class count when
 // to scale; the row splits at the prediction, so a cell's width within its
 // row is that row's rate (TN | FP is TNR | FPR, FN | TP is FNR | TPR).
-// Fill is the true class, the inner border the estimated class, so a
-// wrong cell is one whose border and fill disagree.
+// Each cell is a rounded box: fill = true class, border = estimated class,
+// so a wrong cell is one whose border and fill disagree.
 
 /** Numerator and denominator cells of a metric key, or null for none. */
 function highlightOf(key) {
@@ -44,31 +44,43 @@ function mosaicLayout(c, b, toScale) {
 /**
  * Append the mosaic to parent: cells, then outlines of the highlighted
  * cells on top so neighbors cannot cover them, then labels when there is
- * room (opt.labels). Returns the layout.
+ * room (opt.labels). opt.gap is the white space between cells and
+ * opt.edge the border width, in viewBox units. Returns the layout.
  */
 function drawMosaic(parent, c, b, opt = {}) {
   const rows = mosaicLayout(c, b, opt.toScale !== false);
   const cells = node("g", {}, parent);
   const lines = node("g", { class: "outlines" }, parent);
   const labels = node("g", {}, parent);
+  const g = opt.gap ?? 4, e = opt.edge ?? 3;
   for (const row of rows) {
     row.cells.forEach((k, j) => {
       const x = j ? row.split : b.x0;
       const w = Math.max(0, j ? b.x1 - row.split : row.split - b.x0);
       const st = cellState(k, opt.hl);
-      node("rect", { x, y: row.y, width: w, height: Math.max(0, row.h),
-        class: `cell ${k} ${st}`, "data-cell": k }, cells);
-      const e = opt.edge || 4;
-      if (w > e && row.h > e) {
-        node("rect", { x: x + e / 2, y: row.y + e / 2, width: w - e,
-          height: row.h - e, "stroke-width": e,
-          class: `cell-edge e${j} ${st}` }, cells);
+      // The box fills its slot less half the gap on each side; the stroke
+      // straddles the box edge, so inset it by half the border too.
+      const bw = w - g - e, bh = row.h - g - e;
+      if (bw > 0 && bh > 0) {
+        node("rect", { x: x + (g + e) / 2, y: row.y + (g + e) / 2,
+          width: bw, height: bh, rx: Math.min(6, bw / 2, bh / 2),
+          "stroke-width": e, class: `cell ${k} ${st}`, "data-cell": k },
+          cells);
+      } else if (w > 0 && row.h > 0) {
+        // Too thin for a border: a sliver in the estimate's color, at
+        // least 2 units across so a rare class never vanishes.
+        const sw = w > g + 2 ? w - g : Math.min(w, 2);
+        const sh = row.h > g + 2 ? row.h - g : Math.min(row.h, 2);
+        node("rect", { x: x + (w - sw) / 2, y: row.y + (row.h - sh) / 2,
+          width: sw, height: sh, class: `cell sliver ${k} ${st}`,
+          "data-cell": k }, cells);
       }
-      if (st === "num" || st === "den") {
-        node("rect", { x, y: row.y, width: w, height: Math.max(0, row.h),
-          class: `outline ${st}` }, lines);
+      if ((st === "num" || st === "den") && w > g && row.h > g) {
+        const o = g / 2 - 1.5;
+        node("rect", { x: x + o, y: row.y + o, width: w - 2 * o,
+          height: row.h - 2 * o, rx: 8, class: `outline ${st}` }, lines);
       }
-      if (!opt.labels || w < 30 || row.h < 18) return;
+      if (!opt.labels || bw < 36 || bh < 18) return;
       const cx = x + w / 2, cy = row.y + row.h / 2;
       const two = row.h >= 50 && w >= 44;
       text(CELL_LABEL[k], { x: cx, y: two ? cy - 6 : cy + 6,

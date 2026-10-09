@@ -338,19 +338,17 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .chip.fn, .chip.tp, .cm-cell.fn, .cm-cell.tp { background: var(--c1-pale); }
 .chip.tn, .chip.fn { border-color: var(--c0); }
 .chip.fp, .chip.tp { border-color: var(--c1); }
-.cm-cell.tn, .cm-cell.fn { box-shadow: inset 0 0 0 3.5px var(--c0); }
-.cm-cell.fp, .cm-cell.tp { box-shadow: inset 0 0 0 3.5px var(--c1); }
 .chip.all { background: #eceef3; }
 
-.cell { stroke: #fff; stroke-width: 1.5; }
 .cell.tn, .cell.fp { fill: var(--c0-pale); }
 .cell.fn, .cell.tp { fill: var(--c1-pale); }
 .cell.tn.num, .cell.fp.num { fill: var(--c0-strong); }
 .cell.fn.num, .cell.tp.num { fill: var(--c1-strong); }
-.cell-edge { fill: none; pointer-events: none; }
-.cell-edge.e0 { stroke: var(--c0); }
-.cell-edge.e1 { stroke: var(--c1); }
-.cell-edge.dim { opacity: .3; }
+.cell.tn, .cell.fn { stroke: var(--c0); }
+.cell.fp, .cell.tp { stroke: var(--c1); }
+.cell.sliver { stroke: none; }
+.cell.sliver.tn, .cell.sliver.fn { fill: var(--c0); }
+.cell.sliver.fp, .cell.sliver.tp { fill: var(--c1); }
 .chip-bg { stroke-width: 2; }
 .chip-bg.t0 { fill: var(--c0-pale); }
 .chip-bg.t1 { fill: var(--c1-pale); }
@@ -378,7 +376,7 @@ main { padding-top: 14px; padding-bottom: 24px; }
 /* ------------------------------------------------- confusion matrix tab */
 table.cm {
   border-collapse: separate;
-  border-spacing: 4px;
+  border-spacing: 8px;
   margin: 0 auto 6px;
   font-variant-numeric: tabular-nums;
 }
@@ -391,6 +389,15 @@ table.cm th {
   line-height: 1.25;
 }
 table.cm tbody th { text-align: right; }
+/* Row headers shaded like their row, column headers bordered like their
+   column: the key to fill = truth, border = estimate. */
+table.cm th.rl, table.cm th.cl { color: var(--ink); border-radius: 8px; }
+table.cm th.rl { text-align: center; white-space: nowrap; }
+table.cm th.rl.t0 { background: var(--c0-pale); }
+table.cm th.rl.t1 { background: var(--c1-pale); }
+table.cm th.cl { border: 3px solid; background: #fff; }
+table.cm th.cl.e0 { border-color: var(--c0); }
+table.cm th.cl.e1 { border-color: var(--c1); }
 table.cm .noun {
   display: block;
   font-weight: 500;
@@ -401,11 +408,16 @@ table.cm td {
   border-radius: 8px;
   padding: 6px 10px;
 }
-table.cm td.cm-cell { border: 2.5px solid transparent; }
-table.cm td.cm-cell.num { border: 3px solid var(--ink); }
-table.cm td.cm-cell.den { border: 2.5px dashed var(--ink); }
+table.cm td.cm-cell { border: 3.5px solid; color: var(--ink); }
+table.cm td.cm-cell.tn, table.cm td.cm-cell.fn { border-color: var(--c0); }
+table.cm td.cm-cell.fp, table.cm td.cm-cell.tp { border-color: var(--c1); }
+/* Highlights sit outside the class border so both stay visible. */
+table.cm td.cm-cell.num { outline: 3px solid var(--ink); outline-offset: 2px; }
+table.cm td.cm-cell.den {
+  outline: 2.5px dashed var(--ink);
+  outline-offset: 2px;
+}
 table.cm td.cm-cell.dim { opacity: .35; }
-table.cm td.cm-cell { color: var(--ink); }
 table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
   background: var(--c0-strong);
 }
@@ -414,19 +426,33 @@ table.cm td.cm-cell.num.fn, table.cm td.cm-cell.num.tp {
 }
 table.cm td.cm-cell label {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
   font-weight: 750;
 }
+/* The count reads as plain text; an underline on hover marks it
+   editable. */
 table.cm input {
-  width: 6.2em;
+  width: 4.2em;
   font: inherit;
+  font-size: 1.2rem;
   font-weight: 600;
-  padding: 3px 6px;
-  border: 1px solid #cfd4dd;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, .9);
+  text-align: center;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1.5px dashed transparent;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+table.cm input::-webkit-inner-spin-button,
+table.cm input::-webkit-outer-spin-button { -webkit-appearance: none; }
+table.cm input:hover { border-bottom-color: var(--ink); }
+table.cm input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--ink);
 }
 table.cm .prop { display: block; font-size: .78rem; color: var(--muted); }
 table.cm td.tot, table.cm tr.tot td {
@@ -453,12 +479,15 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
 @keyframes pulse {
   50% { fill: var(--ink); r: 10px; }
 }
-.row-label { text-anchor: end; }
-.rl-head { font-weight: 750; font-size: 15px; }
-.row-label.r0 .rl-head { fill: var(--c0-ink); }
-.row-label.r1 .rl-head { fill: var(--c1-ink); }
-.col-label.c0 .rl-head { fill: var(--c0-ink); }
-.col-label.c1 .rl-head { fill: var(--c1-ink); }
+.row-label, .col-label { text-anchor: middle; }
+.rl-head { fill: var(--ink); font-weight: 750; font-size: 15px; }
+/* Row labels shaded like their row's fill, column labels bordered like
+   their column's cells: the key to fill = truth, border = estimate. */
+.rl-box.t0 { fill: var(--c0-pale); }
+.rl-box.t1 { fill: var(--c1-pale); }
+.cl-box { fill: #fff; stroke-width: 3; }
+.cl-box.e0 { stroke: var(--c0); }
+.cl-box.e1 { stroke: var(--c1); }
 .rl-noun { fill: var(--ink); font-size: 13.5px; }
 .rl-count { fill: var(--muted); font-size: 13px; }
 
@@ -788,7 +817,7 @@ button.m-item.bad { border-color: var(--no-ink); }
 }
 @media (max-width: 640px) {
   .options { grid-template-columns: 1fr; }
-  table.cm input { width: 4.6em; }
+  table.cm input { width: 3.6em; }
   table.cm td { padding: 4px 5px; }
 }
 @media (max-width: 520px) {

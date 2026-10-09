@@ -337,10 +337,11 @@ function rReadout(c, k) {
     CELL_LABEL[k]}</b> ${c[k]}</td>`;
   rEls["r-cm"].innerHTML = `
     <h3>At <i>t</i> = ${fmt(R.thr, 2)}</h3>
-    <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>
-      <th>Predict 1</th></tr></thead><tbody>
-      <tr><th>Truth 0</th>${td("tn")}${td("fp")}</tr>
-      <tr><th>Truth 1</th>${td("fn")}${td("tp")}</tr>
+    <table class="cm mini"><thead><tr><th></th>
+      <th class="cl e0">Predict 0</th><th class="cl e1">Predict 1</th>
+      </tr></thead><tbody>
+      <tr><th class="rl t0">Truth 0</th>${td("tn")}${td("fp")}</tr>
+      <tr><th class="rl t1">Truth 1</th>${td("fn")}${td("tp")}</tr>
     </tbody></table>`;
   const row = (key, def, val) => {
     const mt = METRIC[key];

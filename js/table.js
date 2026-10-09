@@ -241,13 +241,15 @@ function buildTable() {
     <span class="prop" data-prop="${k}"></span></td>`;
   tEls["cm-table"].innerHTML = `<table class="cm">
     <thead><tr><th></th>
-      <th>Predict 0<span class="noun" data-noun="p0"></span></th>
-      <th>Predict 1<span class="noun" data-noun="p1"></span></th>
+      <th class="cl e0">Predict 0<span class="noun" data-noun="p0"></span></th>
+      <th class="cl e1">Predict 1<span class="noun" data-noun="p1"></span></th>
       <th class="tot">Total</th></tr></thead>
     <tbody>
-      <tr><th>Truth 0<span class="noun" data-noun="t0"></span></th>
+      <tr><th class="rl t0">Truth 0<span class="noun" data-noun="t0"></span>
+        </th>
         ${cell("tn")}${cell("fp")}<td class="tot" data-tot="n0"></td></tr>
-      <tr><th>Truth 1<span class="noun" data-noun="t1"></span></th>
+      <tr><th class="rl t1">Truth 1<span class="noun" data-noun="t1"></span>
+        </th>
         ${cell("fn")}${cell("tp")}<td class="tot" data-tot="n1"></td></tr>
       <tr class="tot"><th>Total</th><td data-tot="pn"></td>
         <td data-tot="pp"></td><td data-tot="N"></td></tr>
@@ -370,29 +372,33 @@ function drawMosaicTab(x) {
   const svg = tEls.mosaic, b = MBOX, step = steps()[T.step];
   svg.replaceChildren();
   svg.setAttribute("viewBox", "0 0 540 508");
-  // Column labels, styled like the row labels: left and right ends, since
-  // each row splits at its own place.
-  [[b.x0, "start", "← Predict 0"], [b.x1, "end", "Predict 1 →"]]
-    .forEach(([x0, anchor, head], i) => {
-      const g = node("g", { class: `col-label c${i}`, "text-anchor": anchor },
-        svg);
-      text(head, { x: x0, y: 21, class: "rl-head" }, g);
-      text(x.n[`p${i}`], { x: x0, y: 45, class: "rl-noun" }, g);
-    });
+  // Column labels at the left and right ends, since each row splits at
+  // its own place.
+  const cw = 156;
+  [b.x0 + 2, b.x1 - 2 - cw].forEach((x0, i) => {
+    const g = node("g", { class: "col-label" }, svg);
+    node("rect", { x: x0, y: 2, width: cw, height: 50, rx: 8,
+      class: `cl-box e${i}` }, g);
+    text(i ? "Predict 1 →" : "← Predict 0",
+      { x: x0 + cw / 2, y: 24, class: "rl-head" }, g);
+    text(x.n[`p${i}`], { x: x0 + cw / 2, y: 45, class: "rl-noun" }, g);
+  });
   const rows = drawMosaic(svg, x.c, b, { toScale: T.toScale,
-    hl: tHighlight(), labels: true });
+    hl: tHighlight(), labels: true, gap: 6, edge: 3.5 });
 
   // Row labels, kept apart when a row is thin.
-  const ys = rows.map(r => r.y + r.h / 2);
-  ys[0] = clamp(ys[0], b.y0 + 24, b.y1 - 90);
-  ys[1] = clamp(Math.max(ys[1], ys[0] + 66), b.y0 + 90, b.y1 - 34);
-  if (ys[1] - ys[0] < 66) ys[0] = ys[1] - 66;
+  const ys = rows.map(r => r.y + r.h / 2), d = 92;
+  ys[0] = clamp(ys[0], b.y0 + 44, b.y1 - 44 - d);
+  ys[1] = clamp(Math.max(ys[1], ys[0] + d), b.y0 + 44 + d, b.y1 - 44);
+  if (ys[1] - ys[0] < d) ys[0] = ys[1] - d;
   rows.forEach((r, i) => {
-    const g = node("g", { class: `row-label r${i}` }, svg);
-    text(`Truth ${i}`, { x: b.x0 - 12, y: ys[i] - 14, class: "rl-head" }, g);
-    text(x.n[`t${i}`], { x: b.x0 - 12, y: ys[i] + 9, class: "rl-noun" }, g);
+    const g = node("g", { class: "row-label" }, svg), cx = (b.x0 - 4) / 2;
+    node("rect", { x: 2, y: ys[i] - 43, width: b.x0 - 8, height: 86, rx: 8,
+      class: `rl-box t${i}` }, g);
+    text(`Truth ${i}`, { x: cx, y: ys[i] - 16, class: "rl-head" }, g);
+    text(x.n[`t${i}`], { x: cx, y: ys[i] + 7, class: "rl-noun" }, g);
     text(`${num(r.n)} (${x.N ? pct(r.n / x.N) : "–"})`,
-      { x: b.x0 - 12, y: ys[i] + 32, class: "rl-count" }, g);
+      { x: cx, y: ys[i] + 29, class: "rl-count" }, g);
   });
 
   // Draggable dividers: between the rows (to scale only) and in each row.
