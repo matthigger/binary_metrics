@@ -559,7 +559,18 @@ button:disabled { opacity: .4; cursor: default; }
   stroke-linejoin: round;
 }
 
-.curves { max-width: 520px; margin: 6px auto 0; }
+/* ROC plot with the confusion matrix at the threshold beside it. */
+.curves {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 28px;
+  margin-top: 6px;
+}
+.curves #rocplot { flex: 1 1 340px; max-width: 520px; }
+.r-cm h3 { margin: 0 0 4px; }
+#r-readout h3:first-child { margin-top: 0; }
 .curves svg { max-height: calc(100vh - 200px); cursor: crosshair; }
 .grid { stroke: #edf0f4; stroke-width: 1; }
 .frame { fill: none; stroke: #a3abb9; stroke-width: 1.2; }
@@ -581,7 +592,7 @@ button:disabled { opacity: .4; cursor: default; }
   cursor: help;
   text-decoration: underline dotted #a3abb9;
 }
-.readout table.cm.mini { margin: 0 0 6px; }
+.r-cm table.cm.mini { margin: 0; }
 
 /* --------------------------------------------------------- game tab */
 .game h2 { margin: 4px 0 6px; font-size: 1.3rem; }
@@ -615,7 +626,7 @@ button:disabled { opacity: .4; cursor: default; }
   text-underline-offset: 3px;
 }
 [data-explain], [data-cell] { cursor: help; }
-.mrow[data-explain]:not(.cheat) { cursor: pointer; }
+.mrow[data-explain]:not(.cheat):not(.static) { cursor: pointer; }
 .opt-data { margin: 8px 0 4px; }
 .opt-data table.cm.mini { margin: 6px auto 0; }
 

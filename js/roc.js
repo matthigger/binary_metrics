@@ -100,7 +100,7 @@ function currentK() {
 function rBuild() {
   for (const id of ["strip", "rocplot", "r-n", "r-nval",
     "r-prev", "r-prevval", "r-sep", "r-sepval",
-    "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend"]) {
+    "r-sweep", "r-flip", "r-resample", "r-readout", "r-legend", "r-cm"]) {
     rEls[id] = document.getElementById(id);
   }
   const slider = (id, key) => {
@@ -328,27 +328,40 @@ function drawRoc(k) {
     class: "auc-label", "text-anchor": "end", "data-explain": "auc" }, svg);
 }
 
+/**
+ * The confusion matrix beside the ROC plot, and the metric rows (name,
+ * fraction, value, as on the Confusion matrix tab) in the side panel.
+ */
 function rReadout(c, k) {
   const m = allMetrics(c);
-  const row = (a, b, key) => `<div class="row" data-explain="${key}">`
-    + `<span>${a}</span><span class="val">${b}</span></div>`;
-  rEls["r-readout"].innerHTML = `
-    <h3>At threshold <i>t</i> = ${fmt(R.thr, 2)}</h3>
+  const td = k => `<td class="cm-cell ${k}" data-cell="${k}">${chip(k)} ${
+    c[k]}</td>`;
+  rEls["r-cm"].innerHTML = `
+    <h3>At <i>t</i> = ${fmt(R.thr, 2)}</h3>
     <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>
       <th>Predict 1</th></tr></thead><tbody>
-      <tr><th>Truth 0</th><td class="cm-cell tn" data-cell="tn">${
-        chip("tn")} ${c.tn}</td>
-        <td class="cm-cell fp" data-cell="fp">${chip("fp")} ${c.fp}</td></tr>
-      <tr><th>Truth 1</th><td class="cm-cell fn" data-cell="fn">${
-        chip("fn")} ${c.fn}</td>
-        <td class="cm-cell tp" data-cell="tp">${chip("tp")} ${c.tp}</td></tr>
-    </tbody></table>
-    ${row("TPR (recall)", pct(m.tpr), "tpr")}
-    ${row("FPR", pct(m.fpr), "fpr")}
-    ${row("Precision", pct(m.ppv), "ppv")}
-    ${row("Accuracy", pct(m.acc), "acc")}
+      <tr><th>Truth 0</th>${td("tn")}${td("fp")}</tr>
+      <tr><th>Truth 1</th>${td("fn")}${td("tp")}</tr>
+    </tbody></table>`;
+  const row = (key, def, val) => {
+    const mt = METRIC[key];
+    const name = mt ? `${mt.name}${mt.aka
+      ? `<span class="aka">${mt.aka}</span>` : ""}` : key.toUpperCase();
+    return `<div class="mrow static" data-explain="${key}">
+      <span class="mname">${name}</span><span class="mdef">${def}</span>
+      <span class="val">${val}</span></div>`;
+  };
+  rEls["r-readout"].innerHTML = `
+    <h3>At threshold <i>t</i> = ${fmt(R.thr, 2)}</h3>
+    <div class="mlist">
+      ${["tpr", "fpr", "ppv", "acc"].map(key => row(key, defHTML(key),
+        pct(m[key]))).join("")}
+    </div>
     <h3>Over every threshold</h3>
-    ${row("AUC", auc.toFixed(3), "auc")}
+    <div class="mlist">
+      ${row("auc", '<span class="aka">area under the ROC curve</span>',
+        auc.toFixed(3))}
+    </div>
     ${verts[k][1] < verts[k][0] ? `<p class="warn">This point is below the
       diagonal: worse than guessing. Predicting the opposite would land at
       (${pct(1 - verts[k][0])}, ${pct(1 - verts[k][1])}). Try ${R.back
