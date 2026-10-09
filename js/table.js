@@ -8,13 +8,12 @@ const PRESETS = {
   coin: {
     name: "Coin flip",
     counts: { tn: 250, fp: 250, fn: 250, tp: 250 },
-    nouns: { pop: "samples", pos: "class 1 samples",
-      neg: "class 0 samples", has1: "are class 1", has0: "are class 0",
-      test: "the coin flip", t0: "Class 0", t1: "Class 1",
-      p0: "Tails", p1: "Heads" },
-    source: "A classifier that ignores each sample and flips a fair coin "
-      + "(heads predicts 1), on 1,000 samples with equal priors: 500 of "
-      + "each class. It is right half the time: chance accuracy.",
+    nouns: { pop: "coin tosses", pos: "heads", neg: "tails",
+      has1: "land heads", has0: "land tails", test: "the guess",
+      t0: "Tails", t1: "Heads", p0: "Guess tails", p1: "Guess heads" },
+    source: "Guessing 1,000 tosses of a fair coin, heads (class 1) or "
+      + "tails (class 0), by flipping a second coin. The guess is right "
+      + "half the time: chance accuracy.",
   },
   strep: {
     name: "Strep test",
@@ -142,7 +141,7 @@ const STEPS = [
       100%).</p>` },
 ];
 
-const MBOX = { x0: 124, x1: 512, y0: 34, y1: 466 };
+const MBOX = { x0: 124, x1: 512, y0: 58, y1: 490 };
 
 const T = {
   preset: "strep",
@@ -354,10 +353,16 @@ function drawTable(x) {
 function drawMosaicTab(x) {
   const svg = tEls.mosaic, b = MBOX, step = steps()[T.step];
   svg.replaceChildren();
-  svg.setAttribute("viewBox", "0 0 540 484");
-  text("← Predict 0", { x: b.x0, y: 22, class: "axis-label" }, svg);
-  text("Predict 1 →", { x: b.x1, y: 22, class: "axis-label",
-    "text-anchor": "end" }, svg);
+  svg.setAttribute("viewBox", "0 0 540 508");
+  // Column labels, styled like the row labels: left and right ends, since
+  // each row splits at its own place.
+  [[b.x0, "start", "← Predict 0"], [b.x1, "end", "Predict 1 →"]]
+    .forEach(([x0, anchor, head], i) => {
+      const g = node("g", { class: `col-label c${i}`, "text-anchor": anchor },
+        svg);
+      text(head, { x: x0, y: 21, class: "rl-head" }, g);
+      text(x.n[`p${i}`], { x: x0, y: 45, class: "rl-noun" }, g);
+    });
   const rows = drawMosaic(svg, x.c, b, { toScale: T.toScale,
     hl: tHighlight(), labels: true });
 

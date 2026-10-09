@@ -449,6 +449,8 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
 .rl-head { font-weight: 750; font-size: 15px; }
 .row-label.r0 .rl-head { fill: var(--c0-ink); }
 .row-label.r1 .rl-head { fill: var(--c1-ink); }
+.col-label.c0 .rl-head { fill: var(--c0-ink); }
+.col-label.c1 .rl-head { fill: var(--c1-ink); }
 .rl-noun { fill: var(--ink); font-size: 13.5px; }
 .rl-count { fill: var(--muted); font-size: 13px; }
 

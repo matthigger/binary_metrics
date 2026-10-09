@@ -6,9 +6,9 @@ Interactive teaching demo of binary classification metrics: many are
 ratios of counts from the 2 × 2 confusion matrix (AUC, over every
 threshold, is not). Three tabs:
 
-- **Confusion matrix.** A coin flip (equal priors, chance accuracy), a
-  rapid strep test on 1,000 children and a mammogram screen. Edit the four
-  counts in the table, or drag the dividers of the mosaic beside it (rows
+- **Confusion matrix.** A coin flip (guessing heads or tails: chance
+  accuracy), a rapid strep test on 1,000 children and a mammogram screen.
+  Edit the four counts in the table, or drag the dividers of the mosaic beside it (rows
   = truth, height ∝ class count, split by the prediction, so area ∝ count;
   the total stays fixed). A tour highlights each metric's numerator
   (filled) and denominator (outlined). "Just the popular ones" (on by
