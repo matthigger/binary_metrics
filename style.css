@@ -25,6 +25,7 @@
   /* A hovered metric's numerator and the rest of its denominator. */
   --hl-num: #b4bac4;
   --hl-den: #e7e9ee;
+  --hl-edge: #8b93a1;
   --no-ink: #b91c1c;
   --no-pale: #fef2f2;
   --radius: 14px;
@@ -356,9 +357,12 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .chip-bg.e0 { stroke: var(--c0); }
 .chip-bg.e1 { stroke: var(--c1); }
 .cell.dim, .cell-name.dim, .cell-count.dim { opacity: .3; }
+/* A metric's highlight is all grey: no class colors while it shows. */
+.cell.grey { stroke: var(--hl-edge); }
 .cell.grey.num { fill: var(--hl-num); }
 .cell.grey.den { fill: var(--hl-den); }
 .cell.grey.dim { fill: #fff; }
+.cell.sliver.grey { fill: var(--hl-edge); }
 .cell-name {
   font-weight: 750;
   font-size: 15px;
@@ -419,6 +423,7 @@ table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
 table.cm td.cm-cell.num.fn, table.cm td.cm-cell.num.tp {
   background: var(--c1-strong);
 }
+table.cm td.cm-cell.grey { border-color: var(--hl-edge); }
 table.cm td.cm-cell.grey.num { background: var(--hl-num); }
 table.cm td.cm-cell.grey.den { background: var(--hl-den); }
 table.cm td.cm-cell.grey.dim { background: #fff; }
