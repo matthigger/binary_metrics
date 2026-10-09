@@ -19,14 +19,25 @@ function share(v) {
   return pct(v, 2);
 }
 
+// Each metric's name spelled out, opening its sentence as the cells' do.
+const FULL = {
+  acc: "Accuracy", prev: "Prior", tpr: "True positive rate (TPR)",
+  fnr: "False negative rate (FNR)", tnr: "True negative rate (TNR)",
+  fpr: "False positive rate (FPR)",
+  ppv: "Precision, or positive predictive value (PPV)",
+  fdr: "False discovery rate (FDR)", npv: "Negative predictive value (NPV)",
+  for: "False omission rate (FOR)", bacc: "Balanced accuracy",
+};
+
 /** Plain-English sentence for key in context x, or "" if none. */
 function explainText(key, x) {
   const { c, n } = x, who = x.who, Who = cap(who);
   const has1 = n.has1 || `are ${n.pos}`, has0 = n.has0 || `are ${n.neg}`;
-  if (!c) return GENERIC[key] ? GENERIC[key](n, who) : "";
+  const lead = FULL[key] ? `${FULL[key]}: ` : "";
+  if (!c) return GENERIC[key] ? lead + GENERIC[key](n, who) : "";
   const v = key === "auc" ? x.auc : METRIC[key] ? metricValue(key, c) : 0;
   if (METRIC[key] && !Number.isFinite(v)) {
-    return `Undefined here: its denominator is 0.`;
+    return `${lead}undefined here: its denominator is 0.`;
   }
   const p = share(v);
   const S = {
@@ -63,7 +74,7 @@ function explainText(key, x) {
       + `${n.neg.replace(/s$/, "")} at random: ${pct(v)} of the time the `
       + `first gets the higher score.`,
   };
-  return S[key] ? S[key]() : "";
+  return S[key] ? lead + S[key]() : "";
 }
 
 // Definitions without numbers, for the cheat sheet.
