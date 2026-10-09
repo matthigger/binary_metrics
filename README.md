@@ -6,8 +6,8 @@ Interactive teaching demo of binary classification metrics: many are
 ratios of counts from the 2 × 2 confusion matrix (AUC, over every
 threshold, is not). Three tabs:
 
-- **Confusion matrix.** A coin flip (guessing heads or tails: chance accuracy),
-  a treadmill heart test (the default), a rapid strep test and a mammogram
+- **The metrics.** A coin flip (guessing heads or tails: chance accuracy), a
+  treadmill heart test (the default), a rapid strep test and a mammogram
   screen. Edit the four counts in the table, or drag the dividers of the mosaic
   beside it (rows = truth, height ∝ class count, split by the prediction, so
   area ∝ count; the total stays fixed). A tour highlights each metric's
@@ -47,5 +47,5 @@ Open `index.html` in a browser, or serve it:
 python3 -m http.server 8000   # then visit http://localhost:8000
 ```
 
-Link straight to a tab with `#confusion-matrix`, `#roc` or
+Link straight to a tab with `#the-metrics`, `#roc` or
 `#test-yourself`.

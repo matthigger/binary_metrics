@@ -1,9 +1,9 @@
 // Tabs, the "Just the popular ones" toggle, keyboard routing and the footer
-// build stamp. Each tab lives in its own file: table.js (Confusion matrix),
+// build stamp. Each tab lives in its own file: table.js (The metrics),
 // roc.js (ROC curve) and game.js (Test yourself).
 
 const MODES = {
-  table: { hash: "#confusion-matrix", draw: () => tDraw(), key: e => tKey(e) },
+  table: { hash: "#the-metrics", draw: () => tDraw(), key: e => tKey(e) },
   roc: { hash: "#roc", draw: () => rDraw(), key: e => rKey(e) },
   game: { hash: "#test-yourself", draw: () => gDraw(),
     key: e => gKey(e) },
@@ -55,8 +55,9 @@ tBuild();
 setPreset("heart");
 rBuild();
 gBuild();
-// Older links: #summary-metrics was the ROC tab, #would-you-rather this one.
-const OLD = { "#summary-metrics": "roc", "#would-you-rather": "game" };
+// Older links to tabs since renamed.
+const OLD = { "#confusion-matrix": "table", "#summary-metrics": "roc",
+  "#would-you-rather": "game" };
 setMode(OLD[location.hash]
   || Object.keys(MODES).find(k => MODES[k].hash === location.hash)
   || "table");

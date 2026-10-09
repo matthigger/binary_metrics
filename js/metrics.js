@@ -47,11 +47,11 @@ const METRICS = [
 const METRIC = Object.fromEntries(METRICS.map(m => [m.key, m]));
 
 // The ones most papers report; "Just the popular ones" hides the rest on
-// the Confusion matrix and Test yourself tabs.
+// The metrics and Test yourself tabs.
 const POPULAR = ["prev", "acc", "tpr", "fpr", "ppv"];
 const SETTINGS = { popular: true };
 
-/** Metrics listed on the Confusion matrix tab, under the toggle. */
+/** Metrics listed on The metrics tab, under the toggle. */
 function shownMetrics() {
   return METRICS.filter(m => !SETTINGS.popular || POPULAR.includes(m.key));
 }

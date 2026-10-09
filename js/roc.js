@@ -338,7 +338,7 @@ function drawRoc(k) {
 
 /**
  * The confusion matrix beside the ROC plot, and the metric rows (name,
- * fraction, value, as on the Confusion matrix tab) in the side panel.
+ * fraction, value, as on The metrics tab) in the side panel.
  */
 function rReadout(c, k) {
   const m = allMetrics(c);

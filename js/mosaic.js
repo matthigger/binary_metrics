@@ -1,4 +1,4 @@
-// The confusion matrix drawn as a mosaic, shared by the Confusion matrix tab
+// The confusion matrix drawn as a mosaic, shared by The metrics tab
 // (large, labeled, draggable) and the Test yourself tab (small). Each
 // row is one true class, its height proportional to the class count when
 // to scale; the row splits at the prediction, so a cell's width within its

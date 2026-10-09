@@ -1,4 +1,4 @@
-// Confusion matrix tab: an editable 2 x 2 table of counts, the same counts
+// The metrics tab: an editable 2 x 2 table of counts, the same counts
 // as a mosaic with draggable dividers, a guided tour that highlights each
 // metric's numerator (darker) within its denominator (the rest dimmed),
 // and a list of the metrics. "Just the popular ones" (SETTINGS.popular)

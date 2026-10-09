@@ -370,7 +370,7 @@ main { padding-top: 14px; padding-bottom: 24px; }
   pointer-events: none;
 }
 
-/* ------------------------------------------------- confusion matrix tab */
+/* ------------------------------------------------------ the metrics tab */
 table.cm {
   border-collapse: separate;
   border-spacing: 8px;
