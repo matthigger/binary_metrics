@@ -222,8 +222,14 @@ main { padding-top: 14px; padding-bottom: 24px; }
   display: flex;
   flex-direction: column;
 }
-.table-panel > .side { grid-area: side; }
-.table-panel > .side > .card { flex: 1; }
+.table-panel > .side { grid-area: side; position: relative; }
+/* The box alone sets the row's height: the metric list fills it and
+   scrolls when every metric is shown. */
+.table-panel > .side > .card {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+}
 .view {
   flex: 1;
   min-height: 360px;
@@ -762,6 +768,7 @@ button.m-item.bad { border-color: var(--no-ink); }
 @media (max-width: 1000px) {
   .panel, .intro { grid-template-columns: 1fr; }
   .table-panel { grid-template-areas: "stage" "side"; }
+  .table-panel > .side > .card { position: static; }
 }
 @media (max-width: 640px) {
   .options { grid-template-columns: 1fr; }
