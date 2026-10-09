@@ -1,4 +1,4 @@
-// Would you rather tab: three kinds of round, picked at the top of the
+// Test yourself tab: three kinds of round, picked at the top of the
 // panel. Which number? matches stakeholder questions to the metrics that
 // answer them, by drawing lines. New prior keeps a test's TPR and FPR,
 // moves it to a population with another prior, and asks which numbers go

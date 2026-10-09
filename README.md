@@ -22,7 +22,7 @@ threshold, is not). Three tabs:
   curve, and watch it trace the ROC curve. Sweep animates the threshold;
   Estimate backwards (Undo backwards) predicts 1 on the low-score side, leaving
   the scores in place and mirroring the curve (AUC becomes 1 − AUC).
-- **Would you rather?** Three kinds of round, on scenarios (strep, spam,
+- **Test yourself.** Three kinds of round, on scenarios (strep, spam,
   fraud, bots, defective screens). *Which number?* draws lines from
   stakeholder questions ("of the children who test positive, what share
   really have strep?") to the metrics that answer them, each shown with a
@@ -48,4 +48,4 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 ```
 
 Link straight to a tab with `#confusion-matrix`, `#roc` or
-`#would-you-rather`.
+`#test-yourself`.

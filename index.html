@@ -19,8 +19,7 @@
       <button class="tab" role="tab" data-mode="table">Confusion
         matrix</button>
       <button class="tab" role="tab" data-mode="roc">ROC curve</button>
-      <button class="tab" role="tab" data-mode="game">Would you
-        rather?</button>
+      <button class="tab" role="tab" data-mode="game">Test yourself</button>
       <label class="check popular" data-show="table game"
         title="Show only prior, accuracy, TPR, FPR and precision"><input
         type="checkbox" id="popular" checked> Just the popular ones</label>
@@ -190,38 +189,7 @@
     </aside>
   </main>
 
-  <!-- ============================================== Would you rather -->
-  <section class="intro card" data-show="game">
-    <div>
-      <h2>Would you rather?</h2>
-      <p class="goal"><b>Goal:</b> know which number answers which
-        question, and when the prior changes the answer.</p>
-      <p class="goal approach"><b>Approach:</b> three kinds of round, no
-        algebra. <em>Which number?</em> Match each question to the metric
-        that answers it. <em>New prior:</em> the same test on a population
-        with a different prior; which numbers move? <em>Would you
-        rather?</em> Two classifiers given by TPR and FPR; which makes
-        fewer mistakes here?</p>
-      <p class="muted">Rest the pointer on a metric for what it means in
-        plain English. Keys: <b>1</b>, <b>2</b>, <b>3</b> for the kind of
-        round, <b>a</b> or <b>b</b> to choose, <b>Enter</b> to check and
-        for the next round.</p>
-    </div>
-    <div>
-      <h3>Try this</h3>
-      <ul class="try">
-        <li>For each question, ask what it counts out of: everyone, one
-          true class (a row) or one prediction (a column).</li>
-        <li>In <em>New prior</em>, ask whether a number uses one row or
-          both.</li>
-        <li>In <em>Would you rather?</em>, guess first, then count each
-          classifier's misses and false alarms. Which row is bigger?</li>
-        <li>Turn off <em>Just the popular ones</em> to match TNR, FNR, NPV,
-          FDR, FOR and balanced accuracy too.</li>
-      </ul>
-    </div>
-  </section>
-
+  <!-- ================================================= Test yourself -->
   <main class="panel" data-show="game">
     <div class="stage card game">
       <div class="seg g-kinds" id="g-kind" role="radiogroup"
