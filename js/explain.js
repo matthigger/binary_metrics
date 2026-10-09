@@ -62,7 +62,8 @@ function explainText(key, x) {
     bacc: () => `The average of TPR (${pct(metricValue("tpr", c))}) and TNR `
       + `(${pct(metricValue("tnr", c))}): how often ${who} is right on each `
       + "class, each counting equally however rare.",
-    auc: () => `Pick one ${n.pos.replace(/s$/, "")} and one `
+    auc: () => `Area under the curve (AUC): pick one `
+      + `${n.pos.replace(/s$/, "")} and one `
       + `${n.neg.replace(/s$/, "")} at random: ${pct(v)} of the time the `
       + `first gets the higher score.`,
   };
