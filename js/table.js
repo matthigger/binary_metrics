@@ -35,7 +35,8 @@ const PRESETS = {
     nouns: { pop: "women screened", pos: "women with breast cancer",
       neg: "women without breast cancer", has1: "have breast cancer",
       has0: "don't have breast cancer", test: "the mammogram",
-      t0: "No cancer", t1: "Cancer", p0: "Negative", p1: "Positive" },
+      t0: "No cancer", t1: "Cancer", p0: "Test negative",
+      p1: "Test positive" },
     source: "Screening 1,000 women, with the classic teaching numbers: "
       + "prior 1%, sensitivity 90%, false alarm rate 9% "
       + "(Gigerenzer et al. 2007).",
