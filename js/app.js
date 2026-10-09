@@ -30,7 +30,7 @@ for (const t of document.querySelectorAll(".tab")) {
 document.getElementById("popular").onchange = e => {
   SETTINGS.popular = e.target.checked;
   tPopular();
-  gCheat();
+  gPopular();
   MODES[mode].draw();
 };
 

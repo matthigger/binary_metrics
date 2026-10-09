@@ -22,15 +22,18 @@ threshold, is not). Three tabs:
   trace the ROC curve. Sweep animates the threshold; Estimate backwards
   (Undo backwards) estimates red on the low-score side instead, leaving
   the scores in place and mirroring the curve (AUC becomes 1 − AUC).
-- **Would you rather?** A scenario (strep, spam, fraud, bots, defective
-  screens), a goal (accuracy, cost, precision, recall, false alarms)
-  and two classifiers each described by two clues in different terms.
-  Rounds are kept only when the clues, as rounded on screen, settle the
-  goal. Show the data draws each classifier's confusion matrix and mosaic
-  before the pick (hovering a clue lights up its cells); the reveal adds
-  how to derive them from the clues.
+- **Would you rather?** Three kinds of round, on scenarios (strep, spam,
+  fraud, bots, defective screens). *Which number?* draws lines from
+  stakeholder questions ("of the children who test positive, what share
+  really have strep?") to the metrics that answer them, each shown with a
+  random synonym. *New prior* moves a test with fixed TPR and FPR to a
+  population with another prior: does each of TPR, FPR, precision and
+  accuracy go up, stay or go down? *Would you rather?* gives two
+  classifiers by TPR and FPR only; the goal is fewest mistakes, and every
+  round is one the prior decides (the other classifier would win at 50%).
+  Reveals show the counts and to-scale mosaics.
 
-Resting the pointer on a metric, clue or cell anywhere shows a plain-English
+Resting the pointer on a metric or cell anywhere shows a plain-English
 sentence with natural frequencies ("of every 100 children with strep, the
 rapid strep test catches about 86").
 

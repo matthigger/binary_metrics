@@ -6,7 +6,7 @@
   <title>Binary metrics, visually</title>
   <meta name="description" content="Edit a confusion matrix and watch the
     binary classification metrics update, drag a threshold to trace the ROC
-    curve, and pick between classifiers in a would-you-rather game.">
+    curve, and practice which metric answers which question.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='15' height='15' rx='2' fill='%23bfdbfe'/%3E%3Crect x='18' y='3' width='11' height='15' rx='2' fill='%232563eb'/%3E%3Crect x='3' y='18' width='6' height='11' rx='2' fill='%23ea580c'/%3E%3Crect x='9' y='18' width='20' height='11' rx='2' fill='%23fed7aa'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -220,35 +220,43 @@
   <section class="intro card" data-show="game">
     <div>
       <h2>Would you rather?</h2>
-      <p class="goal"><b>Goal:</b> choose between two classifiers that are
-        described in different terms.</p>
-      <p class="goal approach"><b>Approach:</b> turn each description into
-        counts. N and the prior give the row totals; each clue fills
-        in more of the matrix. Then compute what the goal asks for.</p>
-      <p class="muted">Two clues plus the prior pin down the whole
-        confusion matrix. Rest the pointer on a clue for what it means in
-        plain English. Keys: <b>a</b> or <b>b</b> to choose, <b>Enter</b>
+      <p class="goal"><b>Goal:</b> know which number answers which
+        question, and when the prior changes the answer.</p>
+      <p class="goal approach"><b>Approach:</b> three kinds of round, no
+        algebra. <em>Which number?</em> Match each question to the metric
+        that answers it. <em>New prior:</em> the same test on a population
+        with a different prior; which numbers move? <em>Would you
+        rather?</em> Two classifiers given by TPR and FPR; which makes
+        fewer mistakes here?</p>
+      <p class="muted">Rest the pointer on a metric for what it means in
+        plain English. Keys: <b>1</b>, <b>2</b>, <b>3</b> for the kind of
+        round, <b>a</b> or <b>b</b> to choose, <b>Enter</b> to check and
         for the next round.</p>
     </div>
     <div>
       <h3>Try this</h3>
       <ul class="try">
-        <li>Guess from your gut first, then work it out. How often is the
-          gut right?</li>
-        <li>Watch for clues about the wrong class: a 99% specificity says
-          nothing about how many positives are caught.</li>
-        <li>For a cost goal, compute (cost of a miss) &times; FN + (cost of
-          a false alarm) &times; FP for each.</li>
-        <li>When the condition is rare, compare accuracy with precision.
-          Which one did the goal ask for?</li>
+        <li>For each question, ask what it counts out of: everyone, one
+          true class (a row) or one prediction (a column).</li>
+        <li>In <em>New prior</em>, ask whether a number uses one row or
+          both.</li>
+        <li>In <em>Would you rather?</em>, guess first, then count each
+          classifier's misses and false alarms. Which row is bigger?</li>
+        <li>Turn off <em>Just the popular ones</em> to match TNR, FNR, NPV,
+          FDR, FOR and balanced accuracy too.</li>
       </ul>
     </div>
   </section>
 
   <main class="panel" data-show="game">
     <div class="stage card game">
-      <div id="g-scene"></div>
-      <div class="options" id="g-opts"></div>
+      <div class="seg g-kinds" id="g-kind" role="radiogroup"
+        aria-label="Kind of round">
+        <button data-kind="match" role="radio">Which number?</button>
+        <button data-kind="shift" role="radio">New prior</button>
+        <button data-kind="wyr" role="radio">Would you rather?</button>
+      </div>
+      <div id="g-body"></div>
       <div id="g-verdict" class="verdict"></div>
     </div>
 
@@ -256,14 +264,9 @@
       <div class="card readout">
         <h3>Score</h3>
         <div id="g-score"></div>
-        <label class="check" title="Each classifier's confusion matrix and
-          mosaic, before you choose"><input type="checkbox" id="g-show">
-          Show the data</label>
-        <p class="muted">Shows each classifier's confusion matrix and mosaic
-          (it gives the answer away); hovering a clue lights up its
-          cells.</p>
         <div class="buttons">
-          <button id="g-next">Next round &#9654;</button>
+          <button id="g-next" title="A new round of this kind">Next round
+            &#9654;</button>
         </div>
       </div>
       <div class="card">
