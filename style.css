@@ -476,7 +476,8 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
    their column's cells: the key to fill = truth, border = estimate. */
 .rl-box.t0 { fill: var(--c0-pale); }
 .rl-box.t1 { fill: var(--c1-pale); }
-.cl-box { fill: #fff; stroke-width: 3; }
+.cl-box { fill: #fff; stroke-width: 3.5; }
+#mosaic .cl-box { stroke-width: 5.5; }
 .cl-box.e0 { stroke: var(--c0); }
 .cl-box.e1 { stroke: var(--c1); }
 .rl-noun { fill: var(--ink); font-size: 13.5px; }
