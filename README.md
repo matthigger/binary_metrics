@@ -1,5 +1,7 @@
 # binary_metrics
 
+**Live demo:** <https://matthigger.github.io/binary_metrics/>
+
 Interactive teaching demo of binary classification metrics: many are
 ratios of counts from the 2 × 2 confusion matrix (AUC, over every
 threshold, is not). Three tabs:
