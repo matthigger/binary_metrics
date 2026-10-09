@@ -17,9 +17,11 @@
   --card: #fff;
   --line: #e3e6ec;
   --yes-pale: #f0fdf4;
-  /* The ROC curve's own color: neither class, at ease with the green AUC. */
+  /* The ROC curve's own color, the area under it and its label: neither
+     class. */
   --roc: #6d28d9;
   --roc-dot: #8b5cf6;
+  --roc-pale: #ede9fe;
   --no-ink: #b91c1c;
   --no-pale: #fef2f2;
   --radius: 14px;
@@ -554,7 +556,7 @@ button:disabled { opacity: .4; cursor: default; }
 .axis-label { fill: var(--muted); font-size: 15px; }
 .chance { stroke: #a3abb9; stroke-width: 1.4; stroke-dasharray: 5 5; }
 .chance-label { fill: #8a93a3; font-size: 12.5px; }
-.auc-fill { fill: #dcfce7; }
+.auc-fill { fill: var(--roc-pale); }
 .curve-all { fill: none; stroke: #9aa3b2; stroke-width: 1.6; }
 .curve-traced {
   fill: none;
@@ -563,7 +565,7 @@ button:disabled { opacity: .4; cursor: default; }
   stroke-linejoin: round;
 }
 .cur { fill: var(--roc-dot); stroke: #fff; stroke-width: 2.5; }
-.auc-label { font-weight: 700; font-size: 15px; fill: var(--test-ink); }
+.auc-label { font-weight: 700; font-size: 15px; fill: var(--roc); }
 #rocplot [data-explain] {
   cursor: help;
   text-decoration: underline dotted #a3abb9;
