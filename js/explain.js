@@ -41,7 +41,7 @@ function explainText(key, x) {
     flag: () => `${Who} flags ${num(c.tp + c.fp)} of the `
       + `${num(cellSum(c, CELLS))} as positive, right or wrong.`,
     acc: () => `Of ${n.pop}, ${who} is right about ${p}.`,
-    prev: () => `Of ${n.pop}, ${p} ${has1}, whatever ${who} says.`,
+    prev: () => `Of ${n.pop}, ${p} ${has1}.`,
     tpr: () => `Of the ${n.pos}, ${who} catches about ${p}.`,
     fnr: () => `Of the ${n.pos}, ${who} misses about ${p}.`,
     tnr: () => `Of the ${n.neg}, ${who} correctly clears about ${p}.`,
