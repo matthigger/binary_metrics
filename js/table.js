@@ -246,6 +246,28 @@ function drawTable(x) {
     td.className = `cm-cell ${td.dataset.cell} ${
       cellState(td.dataset.cell, hl)}`;
   }
+  tableFrame(root, hl);
+}
+
+/**
+ * Frame a grey highlight's denominator on the table: a row, a column or
+ * the whole table, so always one rectangle around its cells.
+ */
+function tableFrame(root, hl) {
+  root.querySelector(".den-frame")?.remove();
+  if (!hl || !hl.grey) return;
+  const tds = hl.den.map(k => root.querySelector(`td[data-cell="${k}"]`));
+  const rs = tds.map(td => td.getBoundingClientRect()), B =
+    root.getBoundingClientRect();
+  if (!rs.length || !rs[0].width) return;
+  const pad = 4, x0 = Math.min(...rs.map(r => r.left)) - B.left - pad;
+  const y0 = Math.min(...rs.map(r => r.top)) - B.top - pad;
+  const f = document.createElement("div");
+  f.className = "den-frame";
+  Object.assign(f.style, { left: `${x0}px`, top: `${y0}px`,
+    width: `${Math.max(...rs.map(r => r.right)) - B.left + pad - x0}px`,
+    height: `${Math.max(...rs.map(r => r.bottom)) - B.top + pad - y0}px` });
+  root.append(f);
 }
 
 function drawMosaicTab(x) {

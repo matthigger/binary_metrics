@@ -48,7 +48,8 @@ function mosaicLayout(c, b, toScale) {
 /**
  * Append the mosaic to parent: cells, then labels when there is room
  * (opt.labels). A highlight (opt.hl) darkens the numerator cells and
- * dims every cell outside the denominator. opt.gap is the white space
+ * dims every cell outside the denominator; a grey one (hl.grey) also
+ * frames the denominator, following its cells. opt.gap is the white space
  * between cells and opt.edge the border width, in viewBox units. Returns
  * the layout.
  */
@@ -57,11 +58,18 @@ function drawMosaic(parent, c, b, opt = {}) {
   const cells = node("g", {}, parent);
   const labels = node("g", {}, parent);
   const g = opt.gap ?? 4, e = opt.edge ?? 3;
+  // Each row's span of denominator cells, for the frame.
+  const spans = [];
   for (const row of rows) {
     row.cells.forEach((k, j) => {
       const x = j ? row.split : b.x0;
       const w = Math.max(0, j ? b.x1 - row.split : row.split - b.x0);
       const st = cellState(k, opt.hl);
+      if (opt.hl && opt.hl.den.includes(k)) {
+        const s = spans[rows.indexOf(row)] ??= { a: x, b: x + w, row };
+        s.a = Math.min(s.a, x);
+        s.b = Math.max(s.b, x + w);
+      }
       // The box fills its slot less half the gap on each side; the stroke
       // straddles the box edge, so inset it by half the border too.
       const bw = w - g - e, bh = row.h - g - e;
@@ -90,7 +98,29 @@ function drawMosaic(parent, c, b, opt = {}) {
       }
     });
   }
+  if (opt.hl && opt.hl.grey) denFrame(cells, spans.filter(Boolean), g);
   return rows;
+}
+
+/**
+ * Outline the denominator: its row spans stacked into one shape, stepping
+ * where a column's cells split each row at a different place. The line
+ * runs in the white gap, just outside the cells, so it never crosses one.
+ */
+function denFrame(parent, spans, g) {
+  if (!spans.length) return;
+  const o = Math.max(0.5, g / 2 - 2);
+  const [s0, s1] = spans, top = s0.row.y + o;
+  const L = s => s.a + o, R = s => s.b - o;
+  let d;
+  if (!s1) {
+    d = `M${L(s0)},${top} H${R(s0)} V${s0.row.y + s0.row.h - o} H${L(s0)} Z`;
+  } else {
+    const mid = s1.row.y, bot = s1.row.y + s1.row.h - o;
+    d = `M${L(s0)},${top} H${R(s0)} V${mid} H${R(s1)} V${bot} H${L(s1)}`
+      + ` V${mid} H${L(s0)} Z`;
+  }
+  node("path", { d, class: "den-frame" }, parent);
 }
 
 // Truth (row) and estimate (column) of each cell.

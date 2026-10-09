@@ -23,9 +23,8 @@
   --roc-dot: #8b5cf6;
   --roc-pale: #ede9fe;
   /* A hovered metric's numerator and the rest of its denominator. */
-  --hl-num: #b4bac4;
-  --hl-den: #e7e9ee;
-  --hl-edge: #8b93a1;
+  --hl-num: #9aa1ad;
+  --hl-edge: #c9cdd4;
   --no-ink: #b91c1c;
   --no-pale: #fef2f2;
   --radius: 14px;
@@ -357,12 +356,19 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .chip-bg.e0 { stroke: var(--c0); }
 .chip-bg.e1 { stroke: var(--c1); }
 .cell.dim, .cell-name.dim, .cell-count.dim { opacity: .3; }
-/* A metric's highlight is all grey: no class colors while it shows. */
-.cell.grey { stroke: var(--hl-edge); }
+/* A metric's highlight is all grey: numerator filled, the denominator
+   framed in ink (.den-frame), no class colors while it shows. */
+.cell.grey { stroke: var(--hl-edge); fill: #fff; }
 .cell.grey.num { fill: var(--hl-num); }
-.cell.grey.den { fill: var(--hl-den); }
-.cell.grey.dim { fill: #fff; }
 .cell.sliver.grey { fill: var(--hl-edge); }
+.cell.sliver.grey.num { fill: var(--hl-num); }
+.den-frame {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
 .cell-name {
   font-weight: 750;
   font-size: 15px;
@@ -423,10 +429,14 @@ table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
 table.cm td.cm-cell.num.fn, table.cm td.cm-cell.num.tp {
   background: var(--c1-strong);
 }
-table.cm td.cm-cell.grey { border-color: var(--hl-edge); }
+table.cm td.cm-cell.grey { border-color: var(--hl-edge); background: #fff; }
 table.cm td.cm-cell.grey.num { background: var(--hl-num); }
-table.cm td.cm-cell.grey.den { background: var(--hl-den); }
-table.cm td.cm-cell.grey.dim { background: #fff; }
+#cm-table { position: relative; }
+#cm-table .den-frame {
+  position: absolute;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+}
 table.cm td.cm-cell label {
   display: flex;
   flex-direction: column;
