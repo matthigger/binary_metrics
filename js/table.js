@@ -19,15 +19,15 @@ const PRESETS = {
     name: "Heart test",
     // 40% prior; sensitivity 68%, specificity 77%.
     counts: { tn: 462, fp: 138, fn: 128, tp: 272 },
-    nouns: { pop: "patients with chest pain",
+    nouns: { pop: "patients tested",
       pos: "patients with heart disease",
       neg: "patients without heart disease", has1: "have heart disease",
       has0: "don't have heart disease", test: "the heart test",
       t0: "No disease", t1: "Disease", p0: "Test negative",
       p1: "Test positive" },
     source: "A treadmill heart test (an ECG while exercising) for "
-      + "blocked heart arteries, on 1,000 patients with chest pain, 40% of whom "
-      + "have the disease (for illustration). The test has sensitivity "
+      + "blocked heart arteries, on 1,000 patients, 40% of whom have "
+      + "the disease (for illustration). The test has sensitivity "
       + "68% and specificity 77% (Gianrossi et al. 1989).",
   },
   strep: {
