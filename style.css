@@ -355,9 +355,6 @@ main { padding-top: 14px; padding-bottom: 24px; }
 .chip-bg.e0 { stroke: var(--c0); }
 .chip-bg.e1 { stroke: var(--c1); }
 .cell.dim, .cell-name.dim, .cell-count.dim { opacity: .3; }
-.outline { fill: none; stroke: var(--ink); pointer-events: none; }
-.outline.num { stroke-width: 3; }
-.outline.den { stroke-width: 2.5; stroke-dasharray: 7 4; }
 .cell-name {
   font-weight: 750;
   font-size: 15px;
@@ -411,12 +408,6 @@ table.cm td {
 table.cm td.cm-cell { border: 3.5px solid; color: var(--ink); }
 table.cm td.cm-cell.tn, table.cm td.cm-cell.fn { border-color: var(--c0); }
 table.cm td.cm-cell.fp, table.cm td.cm-cell.tp { border-color: var(--c1); }
-/* Highlights sit outside the class border so both stay visible. */
-table.cm td.cm-cell.num { outline: 3px solid var(--ink); outline-offset: 2px; }
-table.cm td.cm-cell.den {
-  outline: 2.5px dashed var(--ink);
-  outline-offset: 2px;
-}
 table.cm td.cm-cell.dim { opacity: .35; }
 table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
   background: var(--c0-strong);
@@ -564,27 +555,23 @@ button:disabled { opacity: .4; cursor: default; }
 }
 .dot.c0 { background: var(--c0); }
 .dot.c1 { background: var(--c1); }
-.swatch {
-  display: inline-block;
-  width: 18px;
-  height: 12px;
-  border-radius: 3px;
-}
-.swatch.est0 { background: var(--c0-est); border: 1px solid var(--c0-pale); }
-.swatch.est1 { background: var(--c1-est); border: 1px solid var(--c1-pale); }
+/* Legend dots on the ROC strip: fill = truth, border = prediction. */
+.dot.t0, .dot.t1, .dot.e0, .dot.e1 { width: 14px; height: 14px; }
+.dot.t0 { background: var(--c0-strong); }
+.dot.t1 { background: var(--c1-strong); }
+.dot.e0, .dot.e1 { background: #fff; border: 3px solid; }
+.dot.e0 { border-color: var(--c0); }
+.dot.e1 { border-color: var(--c1); }
 #strip { cursor: ew-resize; }
-.est-bg.c0 { fill: var(--c0-est); }
-.est-bg.c1 { fill: var(--c1-est); }
 .est-label { font-weight: 700; font-size: 14px; }
-.est-label.c0 { fill: var(--c0-ink); }
-.est-label.c1 { fill: var(--c1-ink); }
+.est-label { fill: var(--ink); }
 .band-floor { stroke: #c5cad4; stroke-width: 1.2; }
 .band-label { font-weight: 750; font-size: 15px; }
-.band-label.c0 { fill: var(--c0-ink); }
-.band-label.c1 { fill: var(--c1-ink); }
-.sd { stroke: #fff; stroke-width: 1; }
-.sd.c0 { fill: var(--c0); }
-.sd.c1 { fill: var(--c1); }
+.band-label { fill: var(--ink); }
+.sd.t0 { fill: var(--c0-strong); }
+.sd.t1 { fill: var(--c1-strong); }
+.sd.e0 { stroke: var(--c0); }
+.sd.e1 { stroke: var(--c1); }
 .thr-line { stroke: var(--ink); stroke-width: 2.4; }
 .thr-grip { fill: var(--ink); }
 .thr-label { font-weight: 700; font-size: 15px; fill: var(--ink); }

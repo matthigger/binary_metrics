@@ -1,9 +1,10 @@
 // ROC curve tab. Each sample gets a score; scores of Truth 0 samples are
 // drawn from N(-sep/2, 1) and of Truth 1 samples from N(sep/2, 1). The
-// classifier predicts 1 (orange) when score >= threshold t, or, estimating
+// classifier predicts 1 when score >= threshold t, or, estimating
 // backwards, when score <= t. The strip shows the scores (one band per
-// true class) split by t into the four cells, shaded by the estimate; the
-// ROC plot (FPR, TPR) traces the threshold as it moves.
+// true class) split by t into the four cells; each dot is filled by its
+// true class and bordered by its prediction, as the cells are. The ROC
+// plot (FPR, TPR) traces the threshold as it moves.
 //
 // The ROC arithmetic runs on effective scores e = dir * score (dir = -1
 // backwards), so "predict 1" is always e >= dir * t: backwards only
@@ -169,11 +170,13 @@ function rDraw() {
     : "Estimate backwards";
   const [lo, hi] = R.back ? ["&gt;", "&le;"] : ["&lt;", "&ge;"];
   rEls["r-legend"].innerHTML = `
-    <span class="key"><span class="dot c0"></span>Truth 0</span>
-    <span class="key"><span class="dot c1"></span>Truth 1</span>
-    <span class="key"><span class="swatch est0"></span>Estimated blue
+    <span class="key"><b>Fill:</b></span>
+    <span class="key"><span class="dot t0"></span>Truth 0</span>
+    <span class="key"><span class="dot t1"></span>Truth 1</span>
+    <span class="key"><b>Border:</b></span>
+    <span class="key"><span class="dot e0"></span>Predict 0
       (score ${lo} <i>t</i>)</span>
-    <span class="key"><span class="swatch est1"></span>Estimated orange
+    <span class="key"><span class="dot e1"></span>Predict 1
       (score ${hi} <i>t</i>)</span>`;
   const c = rCounts(), k = currentK();
   drawStrip(c);
@@ -187,7 +190,7 @@ function rDraw() {
  */
 function dotLayout() {
   const out = [[], []];
-  let r = 7;
+  let r = 10;
   for (; r > 2; r -= 0.25) {
     const ok = [0, 1].every(c => {
       const H = STRIP.bands[c].y1 - STRIP.bands[c].y0 - 4;
@@ -222,18 +225,17 @@ function drawStrip(c) {
   svg.replaceChildren();
   svg.setAttribute("viewBox", `0 0 ${S.w} ${S.h + 26}`);
   const tx = clamp(sxs(R.thr), S.x0, S.x1);
-  // Class estimated left and right of the threshold.
+  // Class predicted left and right of the threshold.
   const side = R.back ? [1, 0] : [0, 1];
-  const by = S.bands[0].y0 - 4, bh = S.bands[1].y1 - S.bands[0].y0 + 8;
-  node("rect", { x: S.x0, y: by, width: tx - S.x0, height: bh,
-    class: `est-bg c${side[0]}` }, svg);
-  node("rect", { x: tx, y: by, width: S.x1 - tx, height: bh,
-    class: `est-bg c${side[1]}` }, svg);
+  // Band labels shaded like the dots' fill, the true class.
   for (const [i, b] of S.bands.entries()) {
     node("line", { x1: S.x0, x2: S.x1, y1: b.y1, y2: b.y1,
       class: "band-floor" }, svg);
-    text(`Truth ${i}`, { x: S.x0 - 10, y: (b.y0 + b.y1) / 2 + 5,
-      class: `band-label c${i}`, "text-anchor": "end" }, svg);
+    const yc = (b.y0 + b.y1) / 2;
+    node("rect", { x: 2, y: yc - 15, width: S.x0 - 8, height: 30, rx: 7,
+      class: `rl-box t${i}` }, svg);
+    text(`Truth ${i}`, { x: (S.x0 - 6) / 2, y: yc + 5, class: "band-label",
+      "text-anchor": "middle" }, svg);
   }
   for (let v = -5; v <= 5; v++) {
     const x = sxs(v);
@@ -249,24 +251,31 @@ function drawStrip(c) {
   for (const cl of [0, 1]) {
     rs[cl].forEach((s, i) => {
       const p = pos[cl][i];
-      node("circle", { cx: p.x, cy: p.y, r: p.r - 0.6, class: `sd c${cl}` },
-        svg);
+      const est = (R.back ? s <= R.thr : s >= R.thr) ? 1 : 0;
+      node("circle", { cx: p.x, cy: p.y, r: p.r - 1.6,
+        "stroke-width": Math.max(1.5, p.r / 3.5),
+        class: `sd t${cl} e${est}` }, svg);
     });
   }
   const g = node("g", { class: "thr" }, svg);
   node("line", { x1: tx, x2: tx, y1: 22, y2: S.bands[1].y1 + 4,
     class: "thr-line" }, g);
   node("circle", { cx: tx, cy: 22, r: 7, class: "thr-grip" }, g);
-  text(`t = ${fmt(R.thr, 2)}`, { x: tx + 12, y: 32, class: "thr-label" }, g);
-  // Region names, dropped when their side is too narrow to hold them.
-  const name = ["blue", "orange"];
-  if (tx - S.x0 > 150) {
-    text(`← Estimated ${name[side[0]]}`, { x: tx - 12, y: 13,
-      class: `est-label c${side[0]}`, "text-anchor": "end" }, g);
+  text(`t = ${fmt(R.thr, 2)}`, { x: tx + 12, y: 40, class: "thr-label" }, g);
+  // Region names, bordered like the dots they predict for, dropped when
+  // their side is too narrow to hold them.
+  const lw = 112;
+  if (tx - S.x0 > lw + 20) {
+    node("rect", { x: tx - 12 - lw, y: 0, width: lw, height: 22, rx: 6,
+      class: `cl-box e${side[0]}` }, g);
+    text(`← Predict ${side[0]}`, { x: tx - 12 - lw / 2, y: 16,
+      class: "est-label", "text-anchor": "middle" }, g);
   }
-  if (S.x1 - tx > 150) {
-    text(`Estimated ${name[side[1]]} →`, { x: tx + 12, y: 13,
-      class: `est-label c${side[1]}` }, g);
+  if (S.x1 - tx > lw + 20) {
+    node("rect", { x: tx + 12, y: 0, width: lw, height: 22, rx: 6,
+      class: `cl-box e${side[1]}` }, g);
+    text(`Predict ${side[1]} →`, { x: tx + 12 + lw / 2, y: 16,
+      class: "est-label", "text-anchor": "middle" }, g);
   }
   // Cell of each (band, side): row = truth, column = the side's estimate.
   const cell = (truth, est) => [["tn", "fp"], ["fn", "tp"]][truth][est];

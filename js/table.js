@@ -1,8 +1,8 @@
 // Confusion matrix tab: an editable 2 x 2 table of counts, the same counts
 // as a mosaic with draggable dividers, a guided tour that highlights each
-// metric's numerator (filled) and denominator (outlined), and a list of
-// the metrics. "Just the popular ones" (SETTINGS.popular) trims the list
-// and skips the tour steps marked full.
+// metric's numerator (darker) within its denominator (the rest dimmed),
+// and a list of the metrics. "Just the popular ones" (SETTINGS.popular)
+// trims the list and skips the tour steps marked full.
 
 const PRESETS = {
   coin: {
@@ -384,7 +384,7 @@ function drawMosaicTab(x) {
     text(x.n[`p${i}`], { x: x0 + cw / 2, y: 45, class: "rl-noun" }, g);
   });
   const rows = drawMosaic(svg, x.c, b, { toScale: T.toScale,
-    hl: tHighlight(), labels: true, gap: 6, edge: 3.5 });
+    hl: tHighlight(), labels: true, gap: 7, edge: 5.5 });
 
   // Row labels, kept apart when a row is thin.
   const ys = rows.map(r => r.y + r.h / 2), d = 92;

@@ -42,15 +42,15 @@ function mosaicLayout(c, b, toScale) {
 }
 
 /**
- * Append the mosaic to parent: cells, then outlines of the highlighted
- * cells on top so neighbors cannot cover them, then labels when there is
- * room (opt.labels). opt.gap is the white space between cells and
- * opt.edge the border width, in viewBox units. Returns the layout.
+ * Append the mosaic to parent: cells, then labels when there is room
+ * (opt.labels). A highlight (opt.hl) darkens the numerator cells and
+ * dims every cell outside the denominator. opt.gap is the white space
+ * between cells and opt.edge the border width, in viewBox units. Returns
+ * the layout.
  */
 function drawMosaic(parent, c, b, opt = {}) {
   const rows = mosaicLayout(c, b, opt.toScale !== false);
   const cells = node("g", {}, parent);
-  const lines = node("g", { class: "outlines" }, parent);
   const labels = node("g", {}, parent);
   const g = opt.gap ?? 4, e = opt.edge ?? 3;
   for (const row of rows) {
@@ -74,11 +74,6 @@ function drawMosaic(parent, c, b, opt = {}) {
         node("rect", { x: x + (w - sw) / 2, y: row.y + (row.h - sh) / 2,
           width: sw, height: sh, class: `cell sliver ${k} ${st}`,
           "data-cell": k }, cells);
-      }
-      if ((st === "num" || st === "den") && w > g && row.h > g) {
-        const o = g / 2 - 1.5;
-        node("rect", { x: x + o, y: row.y + o, width: w - 2 * o,
-          height: row.h - 2 * o, rx: 8, class: `outline ${st}` }, lines);
       }
       if (!opt.labels || bw < 36 || bh < 18) return;
       const cx = x + w / 2, cy = row.y + row.h / 2;

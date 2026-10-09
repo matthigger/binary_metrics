@@ -11,15 +11,16 @@ threshold, is not). Three tabs:
   screen. Edit the four counts in the table, or drag the dividers of the mosaic
   beside it (rows = truth, height ∝ class count, split by the prediction, so
   area ∝ count; the total stays fixed). A tour highlights each metric's
-  numerator (filled) and denominator (outlined). "Just the popular ones" (on by
-  default) limits this tab and the game to prior, accuracy, TPR, FPR and
-  precision; off, it adds FNR, TNR, FDR, NPV, FOR and balanced accuracy.
+  numerator (darker) within its denominator (the rest dimmed). "Just the
+  popular ones" (on by default) limits this tab and the game to prior,
+  accuracy, TPR, FPR and precision; off, it adds FNR, TNR, FDR, NPV, FOR and
+  balanced accuracy.
 - **ROC curve.** One number that needs no threshold: AUC. Scores of each
   class are drawn from two normals (separation, prior and sample count
-  are sliders). Drag the threshold on the score strip, shaded estimated
-  blue / estimated orange on either side, or along the curve, and watch it
-  trace the ROC curve. Sweep animates the threshold; Estimate backwards
-  (Undo backwards) estimates orange on the low-score side instead, leaving
+  are sliders). Drag the threshold on the score strip, where each dot is
+  filled by its true class and bordered by its prediction, or along the
+  curve, and watch it trace the ROC curve. Sweep animates the threshold;
+  Estimate backwards (Undo backwards) predicts 1 on the low-score side, leaving
   the scores in place and mirroring the curve (AUC becomes 1 − AUC).
 - **Would you rather?** Three kinds of round, on scenarios (strep, spam,
   fraud, bots, defective screens). *Which number?* draws lines from
