@@ -17,6 +17,9 @@
   --card: #fff;
   --line: #e3e6ec;
   --yes-pale: #f0fdf4;
+  /* The ROC curve's own color: neither class, at ease with the green AUC. */
+  --roc: #6d28d9;
+  --roc-dot: #8b5cf6;
   --no-ink: #b91c1c;
   --no-pale: #fef2f2;
   --radius: 14px;
@@ -555,11 +558,11 @@ button:disabled { opacity: .4; cursor: default; }
 .curve-all { fill: none; stroke: #9aa3b2; stroke-width: 1.6; }
 .curve-traced {
   fill: none;
-  stroke: var(--ink);
+  stroke: var(--roc);
   stroke-width: 3;
   stroke-linejoin: round;
 }
-.cur { fill: var(--c1); stroke: var(--ink); stroke-width: 2.2; }
+.cur { fill: var(--roc-dot); stroke: #fff; stroke-width: 2.5; }
 .auc-label { font-weight: 700; font-size: 15px; fill: var(--test-ink); }
 #rocplot [data-explain] {
   cursor: help;

@@ -14,7 +14,7 @@
 // wider one for New prior.
 const SCENARIOS = [
   { title: "Strep throat", prev: [0.25, 0.4], wide: [0.05, 0.5],
-    pop: "children with a sore throat", pos: "children with strep",
+    pop: "children tested", pos: "children with strep",
     neg: "children without strep", has1: "have strep",
     has0: "don't have strep", has1s: "has strep", condIs: "is strep",
     test: "the rapid test", pp: "children who test positive",
@@ -56,7 +56,7 @@ const SCENARIOS = [
     just0: "An account just got cleared", it1: "it is a bot",
     place: "platform" },
   { title: "Defective screens", prev: [0.02, 0.06], wide: [0.005, 0.1],
-    pop: "phone screens off the line", pos: "defective screens",
+    pop: "screens made", pos: "defective screens",
     neg: "good screens", has1: "are defective", has0: "are good",
     has1s: "is defective", condIs: "are defects",
     test: "the inspection camera", pp: "rejected screens",
@@ -74,7 +74,7 @@ const ASK = {
     n => `Forget ${n.test}: what share of all ${n.pop} ${n.has1}?`,
     n => `Before ${n.test} runs, how common ${n.condIs} among the `
       + `${n.pop}?`,
-    n => `With no test at all, what are the odds that a random one of the `
+    n => `With no test at all, what is the chance that a random one of the `
       + `${n.pop} ${n.has1s}?`,
   ],
   acc: [
@@ -106,7 +106,6 @@ const ASK = {
   ppv: [
     n => `Of the ${n.pp}, what share really ${n.has1}?`,
     n => `When ${n.test} ${n.says1}, how often is it right?`,
-    n => `How much should we trust ${n.test} when it ${n.says1}?`,
     n => `${n.just1}. How likely is it that ${n.it1}?`,
   ],
   fdr: [
@@ -118,7 +117,6 @@ const ASK = {
   npv: [
     n => `Of the ${n.pn}, what share really ${n.has0}?`,
     n => `When ${n.test} ${n.says0}, how often is it right?`,
-    n => `How much should we trust ${n.test} when it ${n.says0}?`,
   ],
   for: [
     n => `Of the ${n.pn}, what share ${n.has1} after all?`,
@@ -266,11 +264,14 @@ function makeWyr() {
     const m = opts.map(o => errRate(o, prev));
     const h = opts.map(o => errRate(o, 0.5));
     const win = m[0] < m[1] ? 0 : 1, lose = 1 - win;
+    const P = Math.round(prev * N), Q = N - P;
+    // Whole counts only, so "0.5% of 6,900" never rounds a half sample.
+    const whole = v => Math.abs(v - Math.round(v)) < 1e-9;
     if (h[win] < h[lose] || (m[lose] - m[win]) / m[lose] < 0.2
-      || (h[win] - h[lose]) / h[win] < 0.1) {
+      || (h[win] - h[lose]) / h[win] < 0.1
+      || !opts.every(o => whole(o.fpr * Q) && whole((1 - o.tpr) * P))) {
       continue;
     }
-    const P = Math.round(prev * N), Q = N - P;
     for (const o of opts) {
       const fn = Math.round((1 - o.tpr) * P), fp = Math.round(o.fpr * Q);
       o.c = { tn: Q - fp, fp, fn, tp: P - fn };
