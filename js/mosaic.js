@@ -3,7 +3,8 @@
 // row is one true class, its height proportional to the class count when
 // to scale; the row splits at the prediction, so a cell's width within its
 // row is that row's rate (TN | FP is TNR | FPR, FN | TP is FNR | TPR).
-// Correct cells are solid, wrong ones hatched.
+// Fill is the true class, the inner border the estimated class, so a
+// wrong cell is one whose border and fill disagree.
 
 /** Numerator and denominator cells of a metric key, or null for none. */
 function highlightOf(key) {
@@ -57,6 +58,12 @@ function drawMosaic(parent, c, b, opt = {}) {
       const st = cellState(k, opt.hl);
       node("rect", { x, y: row.y, width: w, height: Math.max(0, row.h),
         class: `cell ${k} ${st}`, "data-cell": k }, cells);
+      const e = opt.edge || 4;
+      if (w > e && row.h > e) {
+        node("rect", { x: x + e / 2, y: row.y + e / 2, width: w - e,
+          height: row.h - e, "stroke-width": e,
+          class: `cell-edge e${j} ${st}` }, cells);
+      }
       if (st === "num" || st === "den") {
         node("rect", { x, y: row.y, width: w, height: Math.max(0, row.h),
           class: `outline ${st}` }, lines);
@@ -73,4 +80,22 @@ function drawMosaic(parent, c, b, opt = {}) {
     });
   }
   return rows;
+}
+
+// Truth (row) and estimate (column) of each cell.
+const CELL_TE = { tn: [0, 0], fp: [0, 1], fn: [1, 0], tp: [1, 1] };
+
+/**
+ * Append an SVG chip for cell k at (x, y), styled like the cells: the
+ * label s on the true class's fill inside the estimate's border. anchor
+ * is "start" or "end", the side of x the chip grows from.
+ */
+function svgChip(parent, k, s, x, y, anchor = "start") {
+  const [t, e] = CELL_TE[k], w = 9 * s.length + 10, h = 22;
+  const x0 = anchor === "end" ? x - w : x;
+  const g = node("g", { class: "svg-chip" }, parent);
+  node("rect", { x: x0, y: y - h / 2, width: w, height: h, rx: 5,
+    class: `chip-bg t${t} e${e}` }, g);
+  text(s, { x: x0 + w / 2, y: y + 5, class: "cell-name" }, g);
+  return g;
 }

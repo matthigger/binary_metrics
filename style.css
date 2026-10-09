@@ -1,14 +1,16 @@
 :root {
   --train-ink: #1d4ed8;
   --test-ink: #15803d;
-  --c0: #2563eb;
-  --c0-ink: #1d4ed8;
-  --c0-pale: #dbeafe;
-  --c0-strong: #93c5fd;
-  --c1: #ea580c;
-  --c1-ink: #c2410c;
-  --c1-pale: #ffedd5;
-  --c1-strong: #fdba74;
+  --c0: #0a66ff;
+  --c0-ink: #0047b8;
+  --c0-pale: #d3e3ff;
+  --c0-strong: #9cc0ff;
+  --c0-est: #ebf2ff;
+  --c1: #ff6b00;
+  --c1-ink: #b84a00;
+  --c1-pale: #ffdcc2;
+  --c1-strong: #ffb37d;
+  --c1-est: #fff0e5;
   --ink: #1c2230;
   --muted: #5d6677;
   --bg: #f4f5f8;
@@ -323,35 +325,34 @@ main { padding-top: 14px; padding-bottom: 24px; }
   font-weight: 700;
   font-size: .82em;
   line-height: 1.35;
-  padding: 0 5px;
+  padding: 0 4px;
   border-radius: 5px;
+  border: 2px solid transparent;
+  color: var(--ink);
 }
-.chip.tn { background: var(--c0-pale); color: var(--c0-ink); }
-.chip.tp { background: var(--c1-pale); color: var(--c1-ink); }
-.chip.fp, .cm-cell.fp {
-  background: repeating-linear-gradient(45deg, #a9cbfb 0 2.5px,
-    var(--c0-pale) 2.5px 6.5px);
-  color: var(--c0-ink);
-}
-.chip.fn, .cm-cell.fn {
-  background: repeating-linear-gradient(45deg, #fdc89a 0 2.5px,
-    var(--c1-pale) 2.5px 6.5px);
-  color: var(--c1-ink);
-}
-.chip.all { background: #eceef3; color: var(--ink); }
-.cm-cell.tn { background: var(--c0-pale); }
-.cm-cell.tp { background: var(--c1-pale); }
+/* Cells: fill = true class (row), border = estimated class (column). */
+.chip.tn, .chip.fp, .cm-cell.tn, .cm-cell.fp { background: var(--c0-pale); }
+.chip.fn, .chip.tp, .cm-cell.fn, .cm-cell.tp { background: var(--c1-pale); }
+.chip.tn, .chip.fn { border-color: var(--c0); }
+.chip.fp, .chip.tp { border-color: var(--c1); }
+.cm-cell.tn, .cm-cell.fn { box-shadow: inset 0 0 0 3.5px var(--c0); }
+.cm-cell.fp, .cm-cell.tp { box-shadow: inset 0 0 0 3.5px var(--c1); }
+.chip.all { background: #eceef3; }
 
-/* SVG cells: solid when right, hatched when wrong. */
 .cell { stroke: #fff; stroke-width: 1.5; }
-.cell.tn { fill: var(--c0-pale); }
-.cell.tn.num { fill: var(--c0-strong); }
-.cell.fp { fill: url(#hatch-fp); }
-.cell.fp.num { fill: url(#hatch-fp-s); }
-.cell.fn { fill: url(#hatch-fn); }
-.cell.fn.num { fill: url(#hatch-fn-s); }
-.cell.tp { fill: var(--c1-pale); }
-.cell.tp.num { fill: var(--c1-strong); }
+.cell.tn, .cell.fp { fill: var(--c0-pale); }
+.cell.fn, .cell.tp { fill: var(--c1-pale); }
+.cell.tn.num, .cell.fp.num { fill: var(--c0-strong); }
+.cell.fn.num, .cell.tp.num { fill: var(--c1-strong); }
+.cell-edge { fill: none; pointer-events: none; }
+.cell-edge.e0 { stroke: var(--c0); }
+.cell-edge.e1 { stroke: var(--c1); }
+.cell-edge.dim { opacity: .3; }
+.chip-bg { stroke-width: 2; }
+.chip-bg.t0 { fill: var(--c0-pale); }
+.chip-bg.t1 { fill: var(--c1-pale); }
+.chip-bg.e0 { stroke: var(--c0); }
+.chip-bg.e1 { stroke: var(--c1); }
 .cell.dim, .cell-name.dim, .cell-count.dim { opacity: .3; }
 .outline { fill: none; stroke: var(--ink); pointer-events: none; }
 .outline.num { stroke-width: 3; }
@@ -362,8 +363,7 @@ main { padding-top: 14px; padding-bottom: 24px; }
   text-anchor: middle;
   pointer-events: none;
 }
-.cell-name.tn, .cell-name.fp { fill: var(--c0-ink); }
-.cell-name.fn, .cell-name.tp { fill: var(--c1-ink); }
+.cell-name { fill: var(--ink); }
 .cell-count {
   fill: var(--ink);
   font-size: 14px;
@@ -402,8 +402,13 @@ table.cm td.cm-cell { border: 2.5px solid transparent; }
 table.cm td.cm-cell.num { border: 3px solid var(--ink); }
 table.cm td.cm-cell.den { border: 2.5px dashed var(--ink); }
 table.cm td.cm-cell.dim { opacity: .35; }
-table.cm td.cm-cell.num.tn { background: var(--c0-strong); }
-table.cm td.cm-cell.num.tp { background: var(--c1-strong); }
+table.cm td.cm-cell { color: var(--ink); }
+table.cm td.cm-cell.num.tn, table.cm td.cm-cell.num.fp {
+  background: var(--c0-strong);
+}
+table.cm td.cm-cell.num.fn, table.cm td.cm-cell.num.tp {
+  background: var(--c1-strong);
+}
 table.cm td.cm-cell label {
   display: flex;
   align-items: center;
@@ -533,14 +538,14 @@ button:disabled { opacity: .4; cursor: default; }
   height: 12px;
   border-radius: 3px;
 }
-.swatch.est0 { background: #dbeafe; border: 1px solid #bfdbfe; }
-.swatch.est1 { background: #fee2e2; border: 1px solid #fecaca; }
+.swatch.est0 { background: var(--c0-est); border: 1px solid var(--c0-pale); }
+.swatch.est1 { background: var(--c1-est); border: 1px solid var(--c1-pale); }
 #strip { cursor: ew-resize; }
-.est-bg.c0 { fill: #eff5ff; }
-.est-bg.c1 { fill: #fef0f0; }
+.est-bg.c0 { fill: var(--c0-est); }
+.est-bg.c1 { fill: var(--c1-est); }
 .est-label { font-weight: 700; font-size: 14px; }
 .est-label.c0 { fill: var(--c0-ink); }
-.est-label.c1 { fill: #b91c1c; }
+.est-label.c1 { fill: var(--c1-ink); }
 .band-floor { stroke: #c5cad4; stroke-width: 1.2; }
 .band-label { font-weight: 750; font-size: 15px; }
 .band-label.c0 { fill: var(--c0-ink); }
@@ -551,15 +556,6 @@ button:disabled { opacity: .4; cursor: default; }
 .thr-line { stroke: var(--ink); stroke-width: 2.4; }
 .thr-grip { fill: var(--ink); }
 .thr-label { font-weight: 700; font-size: 15px; fill: var(--ink); }
-.quad.l { text-anchor: end; }
-.quad.r { text-anchor: start; }
-.quad {
-  font-size: 15px;
-  paint-order: stroke;
-  stroke: #fff;
-  stroke-width: 4px;
-  stroke-linejoin: round;
-}
 
 /* ROC plot with the confusion matrix at the threshold beside it. */
 .curves {
@@ -669,7 +665,7 @@ ol.derive {
   padding: 10px 12px;
 }
 .verdict .yes { background: #f0fdf4; color: var(--test-ink); }
-.verdict .no { background: #fff7ed; color: #9a3412; }
+.verdict .no { background: #fef2f2; color: #b91c1c; }
 
 .defs { position: absolute; }
 

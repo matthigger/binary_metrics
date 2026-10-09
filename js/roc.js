@@ -1,6 +1,6 @@
 // ROC curve tab. Each sample gets a score; scores of Truth 0 samples are
 // drawn from N(-sep/2, 1) and of Truth 1 samples from N(sep/2, 1). The
-// classifier predicts 1 (red) when score >= threshold t, or, estimating
+// classifier predicts 1 (orange) when score >= threshold t, or, estimating
 // backwards, when score <= t. The strip shows the scores (one band per
 // true class) split by t into the four cells, shaded by the estimate; the
 // ROC plot (FPR, TPR) traces the threshold as it moves.
@@ -173,7 +173,7 @@ function rDraw() {
     <span class="key"><span class="dot c1"></span>Truth 1</span>
     <span class="key"><span class="swatch est0"></span>Estimated blue
       (score ${lo} <i>t</i>)</span>
-    <span class="key"><span class="swatch est1"></span>Estimated red
+    <span class="key"><span class="swatch est1"></span>Estimated orange
       (score ${hi} <i>t</i>)</span>`;
   const c = rCounts(), k = currentK();
   drawStrip(c);
@@ -259,7 +259,7 @@ function drawStrip(c) {
   node("circle", { cx: tx, cy: 22, r: 7, class: "thr-grip" }, g);
   text(`t = ${fmt(R.thr, 2)}`, { x: tx + 12, y: 32, class: "thr-label" }, g);
   // Region names, dropped when their side is too narrow to hold them.
-  const name = ["blue", "red"];
+  const name = ["blue", "orange"];
   if (tx - S.x0 > 150) {
     text(`← Estimated ${name[side[0]]}`, { x: tx - 12, y: 13,
       class: `est-label c${side[0]}`, "text-anchor": "end" }, g);
@@ -272,10 +272,9 @@ function drawStrip(c) {
   const cell = (truth, est) => [["tn", "fp"], ["fn", "tp"]][truth][est];
   for (const t of [0, 1]) {
     const y = S.bands[t].y0 + 14;
-    for (const [j, x, cls] of [[0, tx - 10, "l"], [1, tx + 10, "r"]]) {
+    for (const [j, x, a] of [[0, tx - 10, "end"], [1, tx + 10, "start"]]) {
       const k = cell(t, side[j]);
-      text(`${CELL_LABEL[k]} ${c[k]}`, { x, y,
-        class: `quad cell-name ${k} ${cls}` }, svg);
+      svgChip(svg, k, `${CELL_LABEL[k]} ${c[k]}`, x, y, a);
     }
   }
 }
@@ -334,8 +333,8 @@ function drawRoc(k) {
  */
 function rReadout(c, k) {
   const m = allMetrics(c);
-  const td = k => `<td class="cm-cell ${k}" data-cell="${k}">${chip(k)} ${
-    c[k]}</td>`;
+  const td = k => `<td class="cm-cell ${k}" data-cell="${k}"><b>${
+    CELL_LABEL[k]}</b> ${c[k]}</td>`;
   rEls["r-cm"].innerHTML = `
     <h3>At <i>t</i> = ${fmt(R.thr, 2)}</h3>
     <table class="cm mini"><thead><tr><th></th><th>Predict 0</th>

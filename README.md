@@ -7,7 +7,7 @@ ratios of counts from the 2 × 2 confusion matrix (AUC, over every
 threshold, is not). Three tabs:
 
 - **Confusion matrix.** A coin flip (guessing heads or tails: chance accuracy),
-  an exercise stress test (the default), a rapid strep test and a mammogram
+  a treadmill heart test (the default), a rapid strep test and a mammogram
   screen. Edit the four counts in the table, or drag the dividers of the mosaic
   beside it (rows = truth, height ∝ class count, split by the prediction, so
   area ∝ count; the total stays fixed). A tour highlights each metric's
@@ -17,9 +17,9 @@ threshold, is not). Three tabs:
 - **ROC curve.** One number that needs no threshold: AUC. Scores of each
   class are drawn from two normals (separation, prior and sample count
   are sliders). Drag the threshold on the score strip, shaded estimated
-  blue / estimated red on either side, or along the curve, and watch it
+  blue / estimated orange on either side, or along the curve, and watch it
   trace the ROC curve. Sweep animates the threshold; Estimate backwards
-  (Undo backwards) estimates red on the low-score side instead, leaving
+  (Undo backwards) estimates orange on the low-score side instead, leaving
   the scores in place and mirroring the curve (AUC becomes 1 − AUC).
 - **Would you rather?** A scenario (strep, spam, fraud, bots, defective
   screens), a goal (accuracy, cost, precision, recall, false alarms)
