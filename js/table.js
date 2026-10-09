@@ -7,7 +7,7 @@ const PRESETS = {
   coin: {
     name: "Coin flip",
     counts: { tn: 250, fp: 250, fn: 250, tp: 250 },
-    nouns: { pop: "coin tosses", pos: "heads", neg: "tails",
+    nouns: { pop: "all coin tosses", pos: "heads", neg: "tails",
       has1: "land heads", has0: "land tails", test: "the guess",
       t0: "Tails", t1: "Heads", p0: "Guess tails", p1: "Guess heads" },
     source: "Guessing 1,000 tosses of a fair coin, heads (class 1) or "
@@ -18,7 +18,7 @@ const PRESETS = {
     name: "Heart test",
     // 40% prior; sensitivity 68%, specificity 77%.
     counts: { tn: 462, fp: 138, fn: 128, tp: 272 },
-    nouns: { pop: "patients tested",
+    nouns: { pop: "everyone",
       pos: "patients with heart disease",
       neg: "patients without heart disease", has1: "have heart disease",
       has0: "don't have heart disease", test: "the heart test",
@@ -33,20 +33,19 @@ const PRESETS = {
     name: "Strep test",
     // 37% prior; sensitivity 86%, specificity 95%.
     counts: { tn: 601, fp: 29, fn: 52, tp: 318 },
-    nouns: { pop: "children tested", pos: "children with strep",
+    nouns: { pop: "everyone", pos: "children with strep",
       neg: "children without strep", has1: "have strep",
       has0: "don't have strep", test: "the rapid strep test",
       t0: "No strep", t1: "Strep", p0: "Test negative",
       p1: "Test positive" },
     source: "A rapid strep test on 1,000 children. Rates from published "
-      + "reviews: 37% of the children tested have strep (Shaikh et al. "
-      + "2010); the rapid test has sensitivity 86% and specificity 95% "
-      + "(Cohen et al. 2016).",
+      + "reviews: a 37% prior (Shaikh et al. 2010); the rapid test has "
+      + "sensitivity 86% and specificity 95% (Cohen et al. 2016).",
   },
   mammo: {
     name: "Mammogram",
     counts: { tn: 901, fp: 89, fn: 1, tp: 9 },
-    nouns: { pop: "women tested", pos: "women with breast cancer",
+    nouns: { pop: "everyone", pos: "women with breast cancer",
       neg: "women without breast cancer", has1: "have breast cancer",
       has0: "don't have breast cancer", test: "the mammogram",
       t0: "No cancer", t1: "Cancer", p0: "Test negative",

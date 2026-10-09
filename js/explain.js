@@ -2,9 +2,9 @@
 // text as is. One with data-explain (a metric key, a cell key, "auc" or
 // "flag") or data-cell gets a tooltip sentence; the nearest ancestor's
 // data-ctx names the context, a function in EXPLAIN returning
-// { c?, n, who, auc? }: the counts (absent for a
-// generic definition), the nouns { pop, pos, neg, has1, has0 } and the
-// classifier's name.
+// { c?, n, who, auc? }: the counts (absent for a generic definition), the
+// nouns { pop ("everyone"), pos, neg, has1, has0 } and the classifier's
+// name.
 
 const EXPLAIN = {};
 
@@ -39,9 +39,9 @@ function explainText(key, x) {
     tp: () => `True positive (TP): ${who} says positive and is right. `
       + `${num(c.tp)} ${n.pos}.`,
     flag: () => `${Who} flags ${num(c.tp + c.fp)} of the `
-      + `${num(cellSum(c, CELLS))} ${n.pop} as positive, right or wrong.`,
-    acc: () => `Of all ${n.pop}, ${who} is right about ${p}.`,
-    prev: () => `Of all ${n.pop}, ${p} ${has1}, whatever ${who} says.`,
+      + `${num(cellSum(c, CELLS))} as positive, right or wrong.`,
+    acc: () => `Of ${n.pop}, ${who} is right about ${p}.`,
+    prev: () => `Of ${n.pop}, ${p} ${has1}, whatever ${who} says.`,
     tpr: () => `Of the ${n.pos}, ${who} catches about ${p}.`,
     fnr: () => `Of the ${n.pos}, ${who} misses about ${p}.`,
     tnr: () => `Of the ${n.neg}, ${who} correctly clears about ${p}.`,
@@ -68,8 +68,8 @@ function explainText(key, x) {
 
 // Definitions without numbers, for the cheat sheet.
 const GENERIC = {
-  acc: n => `The share of all ${n.pop} it gets right.`,
-  prev: n => `The share of all ${n.pop} that are ${n.pos}: the population, `
+  acc: n => `Of ${n.pop}, the share it gets right.`,
+  prev: n => `Of ${n.pop}, the share that are ${n.pos}: the population, `
     + "not the classifier.",
   tpr: n => `Of the ${n.pos}, the share it catches.`,
   fnr: n => `Of the ${n.pos}, the share it misses.`,

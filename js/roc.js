@@ -34,7 +34,7 @@ const R = {
 // effective); and the AUC.
 let rz, rs, es, order, verts, above, auc;
 const rEls = {};
-const ROC_NOUNS = { pop: "samples", pos: "Truth 1 samples",
+const ROC_NOUNS = { pop: "all samples", pos: "Truth 1 samples",
   neg: "Truth 0 samples", has1: "are Truth 1", has0: "are Truth 0" };
 
 EXPLAIN.roc = () => ({ c: rCounts(), n: ROC_NOUNS, who: "the classifier",

@@ -6,7 +6,8 @@
 // FPR only, kept when the prior decides which makes fewer mistakes. The
 // score counts every answer, across kinds.
 
-// Nouns fill the question bank: has1 / has0 (has1s singular) say a sample
+// Nouns fill the question bank: pop is everyone ("everyone", "all emails"),
+// one / many a sample and samples; has1 / has0 (has1s singular) say a sample
 // is in a class, a1 / a0 name one sample, pp / pn the samples predicted 1
 // / 0, says1 / says0 the test's call on one sample, to1 / to0 what then
 // happens to it, just1 / just0 a stakeholder's news about one sample and
@@ -14,7 +15,8 @@
 // wider one for New prior.
 const SCENARIOS = [
   { title: "Strep throat", prev: [0.25, 0.4], wide: [0.05, 0.5],
-    pop: "children tested", pos: "children with strep",
+    pop: "everyone", one: "child", many: "children",
+    pos: "children with strep",
     neg: "children without strep", has1: "have strep",
     has0: "don't have strep", has1s: "has strep", condIs: "is strep",
     test: "the rapid test", pp: "children who test positive",
@@ -25,7 +27,8 @@ const SCENARIOS = [
     just0: "My daughter just tested negative", it1: "she has strep",
     place: "clinic" },
   { title: "Spam filter", prev: [0.3, 0.6], wide: [0.1, 0.8],
-    pop: "emails", pos: "spam emails", neg: "real emails", has1: "are spam",
+    pop: "all emails", one: "email", many: "emails", pos: "spam emails",
+    neg: "real emails", has1: "are spam",
     has0: "are not spam", has1s: "is spam", condIs: "is spam",
     test: "the spam filter", pp: "emails in the spam folder",
     pn: "emails in the inbox", says1: "sends an email to spam",
@@ -35,7 +38,8 @@ const SCENARIOS = [
     just0: "An email just reached my inbox", it1: "it is spam",
     place: "company" },
   { title: "Card fraud", prev: [0.01, 0.03], wide: [0.002, 0.05],
-    pop: "card transactions", pos: "fraudulent transactions",
+    pop: "all card transactions", one: "transaction",
+    many: "card transactions", pos: "fraudulent transactions",
     neg: "legitimate transactions", has1: "are fraud",
     has0: "are legitimate", has1s: "is fraud", condIs: "is fraud",
     test: "the fraud model", pp: "blocked transactions",
@@ -46,7 +50,8 @@ const SCENARIOS = [
     just0: "A transaction just went through", it1: "it is fraud",
     place: "bank" },
   { title: "Bot accounts", prev: [0.08, 0.2], wide: [0.02, 0.4],
-    pop: "social media accounts", pos: "bots", neg: "human accounts",
+    pop: "all accounts", one: "account", many: "social media accounts",
+    pos: "bots", neg: "human accounts",
     has1: "are bots", has0: "are human", has1s: "is a bot",
     condIs: "are bots", test: "the bot detector", pp: "flagged accounts",
     pn: "cleared accounts", says1: "flags an account",
@@ -56,7 +61,8 @@ const SCENARIOS = [
     just0: "An account just got cleared", it1: "it is a bot",
     place: "platform" },
   { title: "Defective screens", prev: [0.02, 0.06], wide: [0.005, 0.1],
-    pop: "screens made", pos: "defective screens",
+    pop: "all screens", one: "screen", many: "screens",
+    pos: "defective screens",
     neg: "good screens", has1: "are defective", has0: "are good",
     has1s: "is defective", condIs: "are defects",
     test: "the inspection camera", pp: "rejected screens",
@@ -71,17 +77,16 @@ const SCENARIOS = [
 // They say what is counted out of what, never the metric's name.
 const ASK = {
   prev: [
-    n => `Forget ${n.test}: what share of all ${n.pop} ${n.has1}?`,
-    n => `Before ${n.test} runs, how common ${n.condIs} among the `
-      + `${n.pop}?`,
-    n => `With no test at all, what is the chance that a random one of the `
-      + `${n.pop} ${n.has1s}?`,
+    n => `Forget ${n.test}: what share of ${n.pop} ${n.has1}?`,
+    n => `Before ${n.test} runs, how common ${n.condIs} among ${n.pop}?`,
+    n => `With no test at all, what is the chance that a random ${n.one} `
+      + `${n.has1s}?`,
   ],
   acc: [
-    n => `Counting all ${n.pop}, what share does ${n.test} get right?`,
+    n => `Counting ${n.pop}, what share does ${n.test} get right?`,
     n => `How often is ${n.test} right, whichever way the truth goes?`,
-    n => `Across all ${n.pop}, how often does the call from ${n.test} `
-      + "match the truth?",
+    n => `Taking ${n.pop} together, how often does the call from `
+      + `${n.test} match the truth?`,
   ],
   tpr: [
     n => `Of all the ${n.pos}, what share does ${n.test} catch?`,
@@ -644,7 +649,7 @@ function wDraw(rd) {
   const s = rd.s;
   gEls["g-body"].innerHTML = `
     <h2>${s.title}</h2>
-    <p>${num(rd.N)} ${s.pop}, prior ${pctR(rd.prev)}: <b>${num(rd.P)}</b>
+    <p>${num(rd.N)} ${s.many}, prior ${pctR(rd.prev)}: <b>${num(rd.P)}</b>
       are ${s.pos} and <b>${num(rd.Q)}</b> are ${s.neg}.</p>
     <p class="goal"><b>Goal:</b> make the fewest mistakes overall (highest
       accuracy).</p>
