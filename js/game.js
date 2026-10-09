@@ -1,305 +1,305 @@
-// Would you rather tab. Each round has a scenario (population size N and
-// prior, so the row totals P and Q are known), a goal, and two
-// classifiers each described by two clues in different terms. One clue is
-// always about a row (TPR, FNR, FN, TNR, FPR or FP), so it fills one cell;
-// the other fills a second; together they give the whole matrix. After a
-// pick, the reveal shows both matrices and that derivation. Under "Just
-// the popular ones" the clues are TPR, FPR, precision, accuracy and counts.
+// Would you rather tab: three kinds of round, picked at the top of the
+// panel. Which number? matches stakeholder questions to the metrics that
+// answer them, by drawing lines. New prior keeps a test's TPR and FPR,
+// moves it to a population with another prior, and asks which numbers go
+// up, stay or go down. Would you rather? gives two classifiers by TPR and
+// FPR only, kept when the prior decides which makes fewer mistakes. The
+// score counts every answer, across kinds.
 
+// Nouns fill the question bank: has1 / has0 (has1s singular) say a sample
+// is in a class, a1 / a0 name one sample, pp / pn the samples predicted 1
+// / 0, says1 / says0 the test's call on one sample, to1 / to0 what then
+// happens to it, just1 / just0 a stakeholder's news about one sample and
+// it1 what they fear. prev is the prior range for Would you rather?, wide the
+// wider one for New prior.
 const SCENARIOS = [
-  { title: "Strep throat", N: 1000, prev: [0.25, 0.4],
+  { title: "Strep throat", prev: [0.25, 0.4], wide: [0.05, 0.5],
     pop: "children with a sore throat", pos: "children with strep",
-    neg: "children without strep",
-    cost: { miss: 5, fa: 1, text: "Missing strep (no antibiotics, risk of "
-      + "complications) is 5× as bad as a false alarm (an unneeded course "
-      + "of antibiotics)." } },
-  { title: "Spam filter", N: 1000, prev: [0.3, 0.6], pop: "emails",
-    pos: "spam emails", neg: "real emails",
-    cost: { miss: 1, fa: 10, text: "A real email lost in the spam folder "
-      + "is 10× as bad as a spam email reaching the inbox." } },
-  { title: "Card fraud", N: 10000, prev: [0.01, 0.03],
+    neg: "children without strep", has1: "have strep",
+    has0: "don't have strep", has1s: "has strep", condIs: "is strep",
+    test: "the rapid test", pp: "children who test positive",
+    pn: "children who test negative", says1: "says positive",
+    says0: "says negative", a1: "a child with strep",
+    a0: "a child without strep", to1: "test positive", to0: "test negative",
+    just1: "My daughter just tested positive",
+    just0: "My daughter just tested negative", it1: "she has strep",
+    place: "clinic" },
+  { title: "Spam filter", prev: [0.3, 0.6], wide: [0.1, 0.8],
+    pop: "emails", pos: "spam emails", neg: "real emails", has1: "are spam",
+    has0: "are not spam", has1s: "is spam", condIs: "is spam",
+    test: "the spam filter", pp: "emails in the spam folder",
+    pn: "emails in the inbox", says1: "sends an email to spam",
+    says0: "lets an email into the inbox", a1: "a spam email",
+    a0: "a real email", to1: "land in the spam folder", to0: "reach the inbox",
+    just1: "An email just landed in my spam folder",
+    just0: "An email just reached my inbox", it1: "it is spam",
+    place: "company" },
+  { title: "Card fraud", prev: [0.01, 0.03], wide: [0.002, 0.05],
     pop: "card transactions", pos: "fraudulent transactions",
-    neg: "legitimate transactions",
-    cost: { miss: 20, fa: 1, text: "A missed fraud costs 20× as much as a "
-      + "false alarm (a declined card and a phone call)." } },
-  { title: "Bot accounts", N: 1000, prev: [0.08, 0.2],
+    neg: "legitimate transactions", has1: "are fraud",
+    has0: "are legitimate", has1s: "is fraud", condIs: "is fraud",
+    test: "the fraud model", pp: "blocked transactions",
+    pn: "transactions that go through", says1: "blocks a transaction",
+    says0: "lets a transaction through", a1: "a fraudulent transaction",
+    a0: "a legitimate transaction", to1: "get blocked", to0: "go through",
+    just1: "A transaction just got blocked",
+    just0: "A transaction just went through", it1: "it is fraud",
+    place: "bank" },
+  { title: "Bot accounts", prev: [0.08, 0.2], wide: [0.02, 0.4],
     pop: "social media accounts", pos: "bots", neg: "human accounts",
-    cost: { miss: 1, fa: 4, text: "Banning a human is 4× as bad as "
-      + "letting a bot through." } },
-  { title: "Defective screens", N: 10000, prev: [0.02, 0.06],
+    has1: "are bots", has0: "are human", has1s: "is a bot",
+    condIs: "are bots", test: "the bot detector", pp: "flagged accounts",
+    pn: "cleared accounts", says1: "flags an account",
+    says0: "clears an account", a1: "a bot", a0: "a human account",
+    to1: "get flagged", to0: "get cleared",
+    just1: "An account just got flagged",
+    just0: "An account just got cleared", it1: "it is a bot",
+    place: "platform" },
+  { title: "Defective screens", prev: [0.02, 0.06], wide: [0.005, 0.1],
     pop: "phone screens off the line", pos: "defective screens",
-    neg: "good screens",
-    cost: { miss: 15, fa: 1, text: "Shipping a defective screen costs 15× "
-      + "as much as re-inspecting a good one." } },
+    neg: "good screens", has1: "are defective", has0: "are good",
+    has1s: "is defective", condIs: "are defects",
+    test: "the inspection camera", pp: "rejected screens",
+    pn: "screens that pass", says1: "rejects a screen",
+    says0: "passes a screen", a1: "a defective screen", a0: "a good screen",
+    to1: "get rejected", to0: "pass inspection",
+    just1: "A screen just got rejected", just0: "A screen just passed",
+    it1: "it is defective", place: "factory" },
 ];
 
-// Each goal's loss (lower is better) and its value as shown.
-const GOALS = {
-  acc: { text: () => "Pick the one that makes fewer mistakes overall "
-      + "(higher accuracy).",
-    loss: c => c.fp + c.fn,
-    show: c => `accuracy = ${pct(metricValue("acc", c))} `
-      + `(${num(c.fp + c.fn)} mistakes)` },
-  cost: { text: s => `${s.cost.text} Pick the one with the lower total `
-      + "cost.",
-    loss: (c, s) => s.cost.miss * c.fn + s.cost.fa * c.fp,
-    show: (c, s) => `cost = ${s.cost.miss} × FN + ${s.cost.fa} × FP = `
-      + `${s.cost.miss} × ${num(c.fn)} + ${s.cost.fa} × ${num(c.fp)} = `
-      + `${num(s.cost.miss * c.fn + s.cost.fa * c.fp)}` },
-  ppv: { text: s => `When it flags something, it should really be one of `
-      + `the ${s.pos} (higher precision).`,
-    loss: c => 1 - metricValue("ppv", c),
-    show: c => `precision = ${pct(metricValue("ppv", c))}` },
-  tpr: { text: s => `Catch as many of the ${s.pos} as possible (higher `
-      + "recall).",
-    loss: c => c.fn,
-    show: c => `recall = ${pct(metricValue("tpr", c))} `
-      + `(${num(c.tp)} caught)` },
-  fpr: { text: s => `Bother as few of the ${s.neg} as possible (fewer false `
-      + "alarms).",
-    loss: c => c.fp,
-    show: c => `FPR = ${pct(metricValue("fpr", c))} `
-      + `(${num(c.fp)} false alarms)` },
+// Questions a stakeholder might ask, by the metric that answers them.
+// They say what is counted out of what, never the metric's name.
+const ASK = {
+  prev: [
+    n => `Forget ${n.test}: what share of all ${n.pop} ${n.has1}?`,
+    n => `Before ${n.test} runs, how common ${n.condIs} among the `
+      + `${n.pop}?`,
+    n => `With no test at all, what are the odds that a random one of the `
+      + `${n.pop} ${n.has1s}?`,
+  ],
+  acc: [
+    n => `Counting all ${n.pop}, what share does ${n.test} get right?`,
+    n => `How often is ${n.test} right, whichever way the truth goes?`,
+    n => `Across all ${n.pop}, how often does the call from ${n.test} `
+      + "match the truth?",
+  ],
+  tpr: [
+    n => `Of all the ${n.pos}, what share does ${n.test} catch?`,
+    n => `How likely is ${n.a1} to ${n.to1}?`,
+    n => `Out of every 100 ${n.pos}, how many does ${n.test} get right?`,
+  ],
+  fnr: [
+    n => `Of all the ${n.pos}, what share slips past ${n.test}?`,
+    n => `How likely is ${n.a1} to ${n.to0}?`,
+    n => `Out of every 100 ${n.pos}, how many does ${n.test} get wrong?`,
+  ],
+  tnr: [
+    n => `Of all the ${n.neg}, what share does ${n.test} correctly clear?`,
+    n => `How likely is ${n.a0} to ${n.to0}?`,
+    n => `Out of every 100 ${n.neg}, how many does ${n.test} get right?`,
+  ],
+  fpr: [
+    n => `Of all the ${n.neg}, what share does ${n.test} wrongly flag?`,
+    n => `How likely is ${n.a0} to ${n.to1}?`,
+    n => `Out of every 100 ${n.neg}, how many does ${n.test} get wrong?`,
+  ],
+  ppv: [
+    n => `Of the ${n.pp}, what share really ${n.has1}?`,
+    n => `When ${n.test} ${n.says1}, how often is it right?`,
+    n => `How much should we trust ${n.test} when it ${n.says1}?`,
+    n => `${n.just1}. How likely is it that ${n.it1}?`,
+  ],
+  fdr: [
+    n => `Of the ${n.pp}, what share ${n.has0} after all?`,
+    n => `When ${n.test} ${n.says1}, how often is it wrong?`,
+    n => `Of everything ${n.test} flags, what share is wasted on `
+      + `${n.neg}?`,
+  ],
+  npv: [
+    n => `Of the ${n.pn}, what share really ${n.has0}?`,
+    n => `When ${n.test} ${n.says0}, how often is it right?`,
+    n => `How much should we trust ${n.test} when it ${n.says0}?`,
+  ],
+  for: [
+    n => `Of the ${n.pn}, what share ${n.has1} after all?`,
+    n => `When ${n.test} ${n.says0}, how often is it wrong?`,
+    n => `${n.just0}. How likely is it that ${n.it1} anyway?`,
+  ],
+  bacc: [
+    n => `If the ${n.pos} and the ${n.neg} counted equally, however many of `
+      + `each there are, how often would ${n.test} be right?`,
+    n => `Averaging how well ${n.test} does on the ${n.pos} and on the `
+      + `${n.neg}, what do we get?`,
+  ],
 };
 
-// Clues: fam groups clues that fix the same quantity (R: the Truth 1 row
-// split, F: the Truth 0 row split, PP / NP: the predicted columns, A:
-// accuracy, Q: number flagged).
-const CLUES = {
-  tpr: { fam: "R", name: "Recall (TPR, sensitivity)", rate: "tpr" },
-  fnr: { fam: "R", name: "Miss rate (FNR)", rate: "fnr" },
-  fn: { fam: "R", name: "False negatives (FN)", count: "fn" },
-  tnr: { fam: "F", name: "Specificity (TNR)", rate: "tnr" },
-  fpr: { fam: "F", name: "False alarm rate (FPR)", rate: "fpr" },
-  fp: { fam: "F", name: "False positives (FP)", count: "fp" },
-  ppv: { fam: "PP", name: "Precision (PPV)", rate: "ppv" },
-  fdr: { fam: "PP", name: "False discovery rate (FDR)", rate: "fdr" },
-  npv: { fam: "NP", name: "NPV", rate: "npv" },
-  acc: { fam: "A", name: "Accuracy", rate: "acc" },
-  flag: { fam: "Q", name: "Flagged (TP + FP)", count: "flag" },
-};
-const POPULAR_CLUES = ["tpr", "fn", "fpr", "fp", "ppv", "acc", "flag"];
+const KINDS = ["match", "shift", "wyr"];
 
-// Clues that would hand over the goal directly.
-const EXCLUDE = { acc: ["acc"], ppv: ["ppv", "fdr"],
-  tpr: ["tpr", "fnr", "fn"], fpr: ["fpr", "tnr", "fp"], cost: [] };
+// FPRs a classifier may have, as shown.
+const FPRS = [0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.1, 0.12,
+  0.15, 0.2, 0.25, 0.3];
 
-// show: draw each option's confusion matrix and mosaic before the pick;
-// hl: the clue under the pointer { i, type }, lit up in that option's data.
-const G = { round: null, right: 0, played: 0, streak: 0, show: false,
-  hl: null };
+// The metrics New prior asks about, and the answers it offers.
+const SHIFT_KEYS = ["tpr", "fpr", "ppv", "acc"];
+const MOVES = ["up", "same", "down"];
 
-function gNouns() {
-  const s = G.round.s;
-  return { pop: s.pop, pos: s.pos, neg: s.neg };
-}
-EXPLAIN.game0 = () => ({ c: G.round.opts[0].c, n: gNouns(),
-  who: "classifier A" });
-EXPLAIN.game1 = () => ({ c: G.round.opts[1].c, n: gNouns(),
-  who: "classifier B" });
-EXPLAIN.cheat = () => ({ n: gNouns(), who: "the classifier" });
+// rounds: the current round of each kind; built: the Which number? round
+// whose DOM is on screen; drag: the line being drawn; eat: a drag just
+// ended, so the click that follows it is not a click.
+const G = { kind: "match", rounds: {}, right: 0, played: 0, streak: 0,
+  built: null, drag: null, eat: false };
 
-/** Cells a clue reads: a metric's fraction, or the counted cells. */
-function clueHL(type) {
-  const k = CLUES[type];
-  if (k.count === "flag") return { num: ["fp", "tp"], den: [] };
-  if (k.count) return { num: [k.count], den: [] };
-  return highlightOf(k.rate);
-}
-
-/** Key the hover sentence explains for a clue. */
-function clueKey(type) {
-  const k = CLUES[type];
-  return k.rate || k.count;
-}
 const gEls = {};
 const gr = rng(Date.now() % 1e9);
 
 function pick(a) { return a[Math.floor(gr() * a.length)]; }
 
-/** A clue's value as shown, rounded as the student sees it. */
-function clueValue(type, c) {
-  const k = CLUES[type];
-  if (k.count === "flag") return c.tp + c.fp;
-  if (k.count) return c[k.count];
-  const v = metricValue(k.rate, c);
-  return Math.round(v * 1000) / 1000;
+/** Copy of a in random order (Fisher-Yates). */
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(gr() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
 }
 
-function clueText(type, c) {
-  const v = clueValue(type, c);
-  return CLUES[type].count ? num(v) : pct(v);
+/** Percentage, with one decimal only when it is not whole. */
+function pctR(v) {
+  return pct(v, Math.abs(100 * v - Math.round(100 * v)) < 1e-6 ? 0 : 1);
 }
 
-function pickClues(goal, avoid) {
-  const ok = Object.keys(CLUES).filter(t => !EXCLUDE[goal].includes(t)
-    && !avoid.includes(t)
-    && (!SETTINGS.popular || POPULAR_CLUES.includes(t)));
-  const row = ok.filter(t => ["R", "F"].includes(CLUES[t].fam));
-  if (!row.length) return null;
-  const a = pick(row);
-  const rest = ok.filter(t => CLUES[t].fam !== CLUES[a].fam);
-  // Favor a column, accuracy or flag clue as the second.
-  const off = rest.filter(t => !["R", "F"].includes(CLUES[t].fam));
-  const b = off.length && gr() < 0.75 ? pick(off) : pick(rest);
-  return [a, b];
+/** Metric name plus one synonym at random: "TPR (recall)". */
+function metricLabel(k) {
+  const m = METRIC[k], aka = m.aka ? m.aka.split(", ") : [];
+  return aka.length ? `${m.name} (${pick(aka)})` : m.name;
 }
 
-function makeClassifier(P, Q) {
-  const tpr = 0.45 + 0.54 * gr();
-  const fpr = Math.exp(Math.log(0.004) + gr() * Math.log(0.4 / 0.004));
-  const tp = Math.round(tpr * P), fp = Math.round(fpr * Q);
-  return { tn: Q - fp, fp, fn: P - tp, tp };
+/** Expected counts at prior p for a test with rates tpr and fpr. */
+function countsAt(p, tpr, fpr, N) {
+  const P = p * N, Q = N - P;
+  return { tn: Q * (1 - fpr), fp: Q * fpr, fn: P * (1 - tpr), tp: P * tpr };
+}
+
+/** Log-uniform draw in [lo, hi]. */
+function logUniform(lo, hi) {
+  return Math.exp(Math.log(lo) + gr() * Math.log(hi / lo));
+}
+
+/** A prior as a student reads it: whole percent, or 0.1% when rare. */
+function nicePrior(p) {
+  return p >= 0.02 ? Math.round(100 * p) / 100 : Math.round(1000 * p) / 1000;
+}
+
+/** The current round of the current kind, made if there is none. */
+function gRound() {
+  const k = G.kind;
+  if (!G.rounds[k]) G.rounds[k] = MAKE[k]();
+  return G.rounds[k];
+}
+
+EXPLAIN.cheat = () => ({ n: gRound().s, who: "the classifier" });
+for (const i of [0, 1]) {
+  EXPLAIN[`game${i}`] = () => ({ c: G.rounds.wyr.opts[i].c,
+    n: G.rounds.wyr.s, who: `classifier ${"AB"[i]}` });
+  EXPLAIN[`shift${i}`] = () => ({ c: G.rounds.shift.c[i],
+    n: G.rounds.shift.s, who: G.rounds.shift.s.test });
+}
+
+// ---------------------------------------------------------------- rounds
+
+/**
+ * Which number?: five metrics (the popular ones, or five of all of them),
+ * one question each; both columns shuffled.
+ */
+function makeMatch() {
+  const keys = SETTINGS.popular ? POPULAR
+    : shuffle(METRICS.map(m => m.key)).slice(0, 5);
+  const s = pick(SCENARIOS);
+  return { kind: "match", s,
+    qs: shuffle(keys.map(key => ({ key, text: pick(ASK[key])(s) }))),
+    ms: shuffle(keys.map(key => ({ key, label: metricLabel(key) }))),
+    links: keys.map(() => null), sel: null, done: false };
 }
 
 /**
- * Draw a round by rejection: the goal must separate the two by a clear
- * margin (losses 20% apart), and the loser must still beat the winner on
- * one familiar metric, so neither option is better on everything.
+ * New prior: priors at least 2x apart. Precision and accuracy must each
+ * move by half a point or more, so neither reads "same" on screen while
+ * the answer is up or down.
  */
-function makeRound() {
-  for (let tries = 0; tries < 2000; tries++) {
-    const s = pick(SCENARIOS);
-    const prev = s.prev[0] + gr() * (s.prev[1] - s.prev[0]);
-    const P = Math.round(prev * s.N), Q = s.N - P;
-    const goal = pick(Object.keys(GOALS));
-    const cs = [makeClassifier(P, Q), makeClassifier(P, Q)];
-    if (cs.some(c => CELLS.some(k => c[k] < 1))) continue;
-    const loss = cs.map(c => GOALS[goal].loss(c, s));
-    const hi = Math.max(...loss), lo = Math.min(...loss);
-    if (!(hi > 0) || (hi - lo) / hi < 0.2) continue;
-    const win = loss[0] < loss[1] ? 0 : 1;
-    const mw = allMetrics(cs[win]), ml = allMetrics(cs[1 - win]);
-    if (!["acc", "tpr", "ppv", "tnr"].some(k => ml[k] > mw[k] + 0.01)) {
+function makeShift() {
+  const s = pick(SCENARIOS);
+  for (let tries = 0; tries < 20000; tries++) {
+    const tpr = (50 + Math.floor(50 * gr())) / 100, fpr = pick(FPRS);
+    const p = [0, 1].map(() => nicePrior(logUniform(...s.wide)));
+    if (Math.max(...p) < 2 * Math.min(...p)) continue;
+    const c = p.map(x => countsAt(x, tpr, fpr, 10000));
+    const v = c.map(allMetrics);
+    if (["ppv", "acc"].some(k => Math.abs(v[1][k] - v[0][k]) < 0.005)) {
       continue;
     }
-    const a = pickClues(goal, []);
-    const b = a && pickClues(goal, a);
-    if (!b) continue;
-    const rd = { s, P, Q, N: s.N, goal, win, picked: null,
-      opts: [{ c: cs[0], clues: a }, { c: cs[1], clues: b }] };
-    // The clues as shown must settle the goal: every matrix they allow
-    // for the winner beats every one they allow for the loser.
-    const ls = rd.opts.map(o => consistent(o, rd)
-      .map(c => GOALS[goal].loss(c, s)));
-    if (ls.some(l => !l.length)) continue;
-    if (Math.max(...ls[win]) < Math.min(...ls[1 - win])) return rd;
+    const move = k => (v[1][k] > v[0][k] ? "up" : "down");
+    const ans = { tpr: "same", fpr: "same", ppv: move("ppv"),
+      acc: move("acc") };
+    return { kind: "shift", s, tpr, fpr, p, c, v, ans, picks: {},
+      done: false };
   }
   throw new Error("no round found");
 }
 
+/** Mistakes per sample at prior p: misses plus false alarms. */
+function errRate(o, p) { return p * (1 - o.tpr) + (1 - p) * o.fpr; }
+
 /**
- * Every matrix whose clues read the same as option o's, to the rounding
- * shown. The row clue (first) involves one row only, so it is checked
- * alone before the second clue scans the other row.
+ * Would you rather?: two classifiers, the goal fewest mistakes. Kept when
+ * the winner at the scenario's prior (by 20% fewer mistakes) would lose at
+ * a 50% prior (by 10%): the one with better rates on balance loses
+ * because one class is much bigger.
  */
-function consistent(o, rd) {
-  const { P, Q } = rd, [r, x] = o.clues, out = [];
-  const shown = o.clues.map(t => clueText(t, o.c));
-  const truth1 = CLUES[r].fam === "R";
-  for (let a = 0; a <= (truth1 ? P : Q); a++) {
-    const c = { ...o.c };
-    if (truth1) Object.assign(c, { tp: a, fn: P - a });
-    else Object.assign(c, { fp: a, tn: Q - a });
-    if (clueText(r, c) !== shown[0]) continue;
-    for (let b = 0; b <= (truth1 ? Q : P); b++) {
-      if (truth1) Object.assign(c, { fp: b, tn: Q - b });
-      else Object.assign(c, { tp: b, fn: P - b });
-      if (clueText(x, c) === shown[1]) out.push({ ...c });
+function makeWyr() {
+  const N = 10000, s = pick(SCENARIOS);
+  for (let tries = 0; tries < 20000; tries++) {
+    const prev = Math.round(100 * (s.prev[0]
+      + gr() * (s.prev[1] - s.prev[0]))) / 100;
+    const opts = [0, 1].map(() => ({
+      tpr: (50 + Math.floor(50 * gr())) / 100, fpr: pick(FPRS) }));
+    const m = opts.map(o => errRate(o, prev));
+    const h = opts.map(o => errRate(o, 0.5));
+    const win = m[0] < m[1] ? 0 : 1, lose = 1 - win;
+    if (h[win] < h[lose] || (m[lose] - m[win]) / m[lose] < 0.2
+      || (h[win] - h[lose]) / h[win] < 0.1) {
+      continue;
     }
+    const P = Math.round(prev * N), Q = N - P;
+    for (const o of opts) {
+      const fn = Math.round((1 - o.tpr) * P), fp = Math.round(o.fpr * Q);
+      o.c = { tn: Q - fp, fp, fn, tp: P - fn };
+    }
+    return { kind: "wyr", s, N, P, Q, prev, opts, win, h,
+      names: { tpr: metricLabel("tpr"), fpr: metricLabel("fpr") },
+      picked: null, done: false };
   }
-  return out;
+  throw new Error("no round found");
 }
 
-// ------------------------------------------------------------ derivation
-
-/**
- * Steps from the clues to the counts, as HTML lines. The row clue fixes
- * TP and FN (or FP and TN); the second clue then fixes the other row.
- */
-function deriveHTML(o, rd) {
-  const { P, Q, N } = rd, c = o.c, n = num;
-  const [r, x] = o.clues;
-  const L = [rowLine(r, c, rd)];
-  const truth1 = CLUES[r].fam === "R";
-  // The other row, from the second clue.
-  const rest1 = `TP = ${n(c.tp)}, FN = ${n(P)} − ${n(c.tp)} = ${n(c.fn)}.`;
-  const rest0 = `TN = ${n(Q)} − ${n(c.fp)} = ${n(c.tn)}.`;
-  const xv = clueValue(x, c), X = clueText(x, c);
-  if (CLUES[x].fam === "R" || CLUES[x].fam === "F") {
-    L.push(rowLine(x, c, rd));
-  } else if (truth1) {
-    const f = {
-      ppv: () => `Precision ${X}: TP + FP = ${n(c.tp)} / ${X} ≈ `
-        + `${n(c.tp + c.fp)}, so FP ≈ ${n(c.fp)} and ${rest0}`,
-      fdr: () => `FDR ${X}: precision = 1 − ${X}, TP + FP = ${n(c.tp)} / `
-        + `${pct(1 - xv)} ≈ ${n(c.tp + c.fp)}, so FP ≈ ${n(c.fp)} and `
-        + rest0,
-      npv: () => `NPV ${X} = TN / (TN + FN): TN = ${X} × ${n(c.fn)} / `
-        + `${pct(1 - xv)} ≈ ${n(c.tn)}, so FP = ${n(Q)} − ${n(c.tn)} = `
-        + `${n(c.fp)}.`,
-      acc: () => `Accuracy ${X}: TP + TN = ${X} × ${n(N)} ≈ `
-        + `${n(c.tp + c.tn)}, so TN ≈ ${n(c.tn)} and FP = ${n(c.fp)}.`,
-      flag: () => `TP + FP = ${X}, so FP = ${X} − ${n(c.tp)} = ${n(c.fp)} `
-        + `and ${rest0}`,
-    };
-    L.push(f[x]());
-  } else {
-    const f = {
-      ppv: () => `Precision ${X} = TP / (TP + FP): TP = ${X} × ${n(c.fp)} / `
-        + `${pct(1 - xv)} ≈ ${n(c.tp)}, so FN = ${n(c.fn)}.`,
-      fdr: () => `FDR ${X} = FP / (TP + FP): TP + FP = ${n(c.fp)} / ${X} ≈ `
-        + `${n(c.tp + c.fp)}, so ${rest1}`,
-      npv: () => `NPV ${X} = TN / (TN + FN): TN + FN = ${n(c.tn)} / ${X} ≈ `
-        + `${n(c.tn + c.fn)}, so FN ≈ ${n(c.fn)} and TP = ${n(c.tp)}.`,
-      acc: () => `Accuracy ${X}: TP + TN = ${X} × ${n(N)} ≈ `
-        + `${n(c.tp + c.tn)}, so ${rest1}`,
-      flag: () => `TP + FP = ${X}, so ${rest1}`,
-    };
-    L.push(f[x]());
-  }
-  return L;
-}
-
-/** The cell pair a row clue fixes, from the row total. */
-function rowLine(t, c, rd) {
-  const { P, Q } = rd, n = num, V = clueText(t, c);
-  if (t === "tpr") {
-    return `TPR ${V}: TP = ${V} × ${n(P)} ≈ ${n(c.tp)}, so FN = `
-      + `${n(P)} − ${n(c.tp)} = ${n(c.fn)}.`;
-  }
-  if (t === "fnr") {
-    return `FNR ${V}: FN = ${V} × ${n(P)} ≈ ${n(c.fn)}, so TP = `
-      + `${n(P)} − ${n(c.fn)} = ${n(c.tp)}.`;
-  }
-  if (t === "fn") {
-    return `FN = ${n(c.fn)}, so TP = ${n(P)} − ${n(c.fn)} = ${n(c.tp)}.`;
-  }
-  if (t === "tnr") {
-    return `TNR ${V}: TN = ${V} × ${n(Q)} ≈ ${n(c.tn)}, so FP = `
-      + `${n(Q)} − ${n(c.tn)} = ${n(c.fp)}.`;
-  }
-  if (t === "fpr") {
-    return `FPR ${V}: FP = ${V} × ${n(Q)} ≈ ${n(c.fp)}, so TN = `
-      + `${n(Q)} − ${n(c.fp)} = ${n(c.tn)}.`;
-  }
-  return `FP = ${n(c.fp)}, so TN = ${n(Q)} − ${n(c.fp)} = ${n(c.tn)}.`;
-}
+const MAKE = { match: makeMatch, shift: makeShift, wyr: makeWyr };
 
 // ----------------------------------------------------------------- build
 
 function gBuild() {
-  for (const id of ["g-scene", "g-opts", "g-verdict", "g-score",
-    "g-next", "g-show", "g-cheat"]) {
+  for (const id of ["g-kind", "g-body", "g-verdict", "g-score", "g-next",
+    "g-cheat"]) {
     gEls[id] = document.getElementById(id);
   }
+  for (const b of gEls["g-kind"].children) {
+    b.onclick = () => setKind(b.dataset.kind);
+  }
   gEls["g-next"].onclick = newRound;
-  gEls["g-show"].onchange = () => {
-    G.show = gEls["g-show"].checked;
-    gDraw();
-  };
+  // Lines follow their endpoints when text wraps or feedback appears.
+  new ResizeObserver(() => {
+    if (G.kind === "match") mLines();
+  }).observe(gEls["g-body"]);
   gCheat();
-  newRound();
 }
 
 function gCheat() {
@@ -309,119 +309,421 @@ function gCheat() {
     <span class="mdef">${defHTML(m.key)}</span></div>`).join("");
 }
 
-function newRound() {
-  G.round = makeRound();
-  G.hl = null;
+/** Apply the popular toggle: cheat sheet, and an unchecked match round. */
+function gPopular() {
+  gCheat();
+  if (G.rounds.match && !G.rounds.match.done) G.rounds.match = null;
+}
+
+function setKind(k) {
+  G.kind = k;
   gDraw();
 }
 
-function choose(i) {
-  const rd = G.round;
-  if (rd.picked !== null) return;
-  rd.picked = i;
-  G.played++;
-  if (i === rd.win) {
-    G.right++;
-    G.streak++;
-  } else {
-    G.streak = 0;
-  }
+function newRound() {
+  G.rounds[G.kind] = MAKE[G.kind]();
   gDraw();
+}
+
+/** Add a finished round's k right answers out of n to the score. */
+function score(k, n) {
+  G.right += k;
+  G.played += n;
+  G.streak = k === n ? G.streak + 1 : 0;
 }
 
 function gDraw() {
-  const rd = G.round, s = rd.s, done = rd.picked !== null;
-  gEls["g-scene"].innerHTML = `
-    <h2>${s.title}</h2>
-    <p>${num(rd.N)} ${s.pop}: <b>${num(rd.P)}</b> are ${s.pos} and
-      <b>${num(rd.Q)}</b> are ${s.neg} (prior ${pct(rd.P / rd.N)}).</p>
-    <p class="goal"><b>Goal:</b> ${GOALS[rd.goal].text(s)}</p>
-    <p class="wyr">Would you rather use&hellip;</p>`;
-  gEls["g-opts"].replaceChildren(...rd.opts.map((o, i) => optionCard(o, i)));
-  let verdict = "";
-  if (done) {
-    const ok = rd.picked === rd.win, w = "AB"[rd.win];
-    verdict = `<p class="${ok ? "yes" : "no"}">${ok ? "Right!" : "Not this "
-      + "time."} Classifier ${w} wins: ${GOALS[rd.goal].show(
-      rd.opts[rd.win].c, s)}, against ${GOALS[rd.goal].show(
-      rd.opts[1 - rd.win].c, s)}.</p>`;
+  const rd = gRound();
+  for (const b of gEls["g-kind"].children) {
+    b.setAttribute("aria-checked", b.dataset.kind === G.kind);
   }
-  gEls["g-verdict"].innerHTML = verdict;
+  // The cheat sheet's sentences would give Which number? away.
+  if (G.kind === "match") delete gEls["g-cheat"].dataset.ctx;
+  else gEls["g-cheat"].dataset.ctx = "cheat";
+  if (G.kind === "match") {
+    if (G.built !== rd) mBuild(rd);
+    mSync();
+  } else {
+    G.built = null;
+    DRAW[G.kind](rd);
+  }
+  gVerdict(rd);
   gEls["g-score"].innerHTML = `
     <div class="row"><span>Right</span><span class="val">${G.right} of
       ${G.played}</span></div>
-    <div class="row"><span>Streak</span><span class="val">${G.streak}
-      </span></div>`;
+    <div class="row" data-tip="Rounds in a row with every answer right">
+      <span>Streak</span><span class="val">${G.streak}</span></div>`;
 }
 
-function optionCard(o, i) {
-  const rd = G.round, s = rd.s, done = rd.picked !== null;
-  const card = document.createElement("div");
-  card.className = "option card" + (done ? (i === rd.win ? " win" : " lose")
-    : "") + (rd.picked === i ? " picked" : "");
-  card.dataset.ctx = `game${i}`;
-  card.innerHTML = `<h3>Classifier ${"AB"[i]}</h3>` + o.clues.map(t => `
-    <div class="clue" data-type="${t}" data-explain="${clueKey(t)}">
-      <span class="cname">${CLUES[t].name}</span>
-      <span class="cval">${clueText(t, o.c)}</span></div>`).join("");
-  const data = document.createElement("div");
-  data.className = "opt-data";
-  card.append(data);
-  drawOptData(data, o, i);
-  for (const el of card.querySelectorAll(".clue")) {
-    el.onmouseenter = () => {
-      G.hl = { i, type: el.dataset.type };
-      drawOptData(data, o, i);
-    };
-    el.onmouseleave = () => {
-      G.hl = null;
-      drawOptData(data, o, i);
-    };
+/** Verdict under a finished round, with a Next button. */
+function gVerdict(rd) {
+  const el = gEls["g-verdict"];
+  if (!rd.done) {
+    el.replaceChildren();
+    return;
   }
-  if (!done) {
-    const b = document.createElement("button");
-    b.className = "choose";
-    b.textContent = `Choose ${"AB"[i]}`;
-    b.onclick = () => choose(i);
-    card.append(b);
-    return card;
+  let k, n, head;
+  if (rd.kind === "match") {
+    n = rd.qs.length;
+    k = rd.links.filter((j, i) => rd.ms[j].key === rd.qs[i].key).length;
+    head = `${k} of ${n} right.`;
+  } else if (rd.kind === "shift") {
+    n = SHIFT_KEYS.length;
+    k = SHIFT_KEYS.filter(m => rd.picks[m] === rd.ans[m]).length;
+    head = `${k} of ${n} right.`;
+  } else {
+    n = 1;
+    k = rd.picked === rd.win ? 1 : 0;
+    head = `${k ? "Right!" : "Not this time."} Classifier ${"AB"[rd.win]} `
+      + `makes fewer mistakes. ${wWhy(rd)}`;
   }
-  const rev = document.createElement("div");
-  rev.className = "reveal";
-  rev.innerHTML = `<ol class="derive">${deriveHTML(o, rd)
-    .map(l => `<li>${l}</li>`).join("")}</ol>
-    <p class="goalval">${GOALS[rd.goal].show(o.c, s)}</p>`;
-  card.append(rev);
-  return card;
+  el.innerHTML = `<p class="${k === n ? "yes" : "no"}">${head}</p>
+    <div class="buttons"><button data-next>Next round &#9654;</button>
+    </div>`;
+  el.querySelector("[data-next]").onclick = newRound;
+}
+
+// --------------------------------------------------------- Which number?
+
+function mBuild(rd) {
+  G.built = rd;
+  gEls["g-body"].innerHTML = `
+    <h2>${rd.s.title}</h2>
+    <p>Each question asks for one number. Draw a line from each question
+      to the metric that answers it, or click one and then the other.</p>
+    <div class="match">
+      <svg class="m-lines" aria-hidden="true"></svg>
+      <div class="m-col">${rd.qs.map((q, i) => `
+        <button class="m-item q" data-side="q" data-i="${i}"><span
+          class="m-text">&ldquo;${q.text}&rdquo;</span><span
+          class="m-why"></span><span class="m-dot"></span></button>`)
+        .join("")}</div>
+      <div class="m-col m-ms">${rd.ms.map((m, j) => `
+        <button class="m-item m" data-side="m" data-i="${j}"><span
+          class="m-dot"></span>${m.label}</button>`).join("")}</div>
+    </div>
+    <div class="buttons"><button id="g-check">Check</button></div>`;
+  const box = gEls["g-body"].querySelector(".match");
+  for (const el of box.querySelectorAll(".m-item")) mItemEvents(el, rd);
+  box.querySelector(".m-lines").addEventListener("click", e => {
+    const i = e.target.dataset.i;
+    if (i === undefined || rd.done) return;
+    rd.links[Number(i)] = null;
+    mSync();
+  });
+  document.getElementById("g-check").onclick = mCheck;
+}
+
+/** Link question i to metric j, freeing j from any other question. */
+function mLink(i, j) {
+  const rd = G.rounds.match;
+  rd.links = rd.links.map(x => (x === j ? null : x));
+  rd.links[i] = j;
+  rd.sel = null;
+  mSync();
 }
 
 /**
- * The option's confusion matrix and mosaic, shown once picked or while
- * Show the data is on; the hovered clue's cells are highlighted.
+ * Drag from one column to the other draws a line; a click selects an
+ * item, and a click on the other column then links the two. A click on a
+ * linked item's dot removes its line.
  */
-function drawOptData(el, o, i) {
-  const rd = G.round;
-  el.replaceChildren();
-  if (rd.picked === null && !G.show) return;
-  const hl = G.hl && G.hl.i === i ? clueHL(G.hl.type) : null;
-  const svg = node("svg", { viewBox: "0 0 220 150", class: "mini-mosaic" },
-    el);
-  drawMosaic(svg, o.c, { x0: 4, x1: 216, y0: 4, y1: 146 },
-    { toScale: false, labels: true, hl });
-  const td = k => `<td class="cm-cell ${k} ${cellState(k, hl)}"
-    data-cell="${k}">${chip(k)} ${num(o.c[k])}</td>`;
-  el.insertAdjacentHTML("beforeend", `<table class="cm mini"><thead><tr>
-    <th></th><th>Predict 0</th><th>Predict 1</th></tr></thead><tbody>
-    <tr><th>Truth 0</th>${td("tn")}${td("fp")}</tr>
-    <tr><th>Truth 1</th>${td("fn")}${td("tp")}</tr></tbody></table>`);
+function mItemEvents(el, rd) {
+  const side = el.dataset.side, i = Number(el.dataset.i);
+  const linkTo = j => (side === "q" ? mLink(i, j) : mLink(j, i));
+  el.addEventListener("pointerdown", e => {
+    G.eat = false;
+    if (rd.done || e.button > 0) return;
+    G.drag = { side, i, x: e.clientX, y: e.clientY, moved: false };
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener("pointermove", e => {
+    const d = G.drag;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 8) {
+      return;
+    }
+    d.moved = true;
+    mLines(e);
+  });
+  el.addEventListener("pointerup", e => {
+    const d = G.drag;
+    G.drag = null;
+    if (!d || !d.moved) return;
+    G.eat = true;
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const t = hit && hit.closest(".m-item");
+    if (t && t.dataset.side !== side) linkTo(Number(t.dataset.i));
+    else mLines();
+  });
+  el.addEventListener("pointercancel", () => {
+    G.drag = null;
+    mLines();
+  });
+  el.addEventListener("click", e => {
+    // A touch drag may fire no click, so a pending eat is dropped at
+    // the next pointerdown; keyboard clicks (detail 0) are never eaten.
+    if (G.eat && e.detail) {
+      G.eat = false;
+      return;
+    }
+    if (rd.done) return;
+    if (e.target.closest(".m-dot") && el.classList.contains("linked")) {
+      rd.links = rd.links.map((j, q) => ((side === "q" ? q === i : j === i)
+        ? null : j));
+      mSync();
+      return;
+    }
+    const sel = rd.sel;
+    if (sel && sel.side !== side) {
+      linkTo(sel.i);
+      return;
+    }
+    rd.sel = sel && sel.side === side && sel.i === i ? null : { side, i };
+    mSync();
+  });
 }
 
+/** Item states, feedback after Check, and the lines. */
+function mSync() {
+  const rd = G.rounds.match, root = gEls["g-body"];
+  root.querySelector(".match").classList.toggle("done", rd.done);
+  for (const el of root.querySelectorAll(".m-item")) {
+    const side = el.dataset.side, i = Number(el.dataset.i);
+    el.classList.toggle("linked", side === "q" ? rd.links[i] !== null
+      : rd.links.includes(i));
+    el.classList.toggle("sel", !!rd.sel && rd.sel.side === side
+      && rd.sel.i === i);
+    if (!rd.done || side !== "q") continue;
+    const q = rd.qs[i], ok = rd.ms[rd.links[i]].key === q.key;
+    const label = rd.ms.find(m => m.key === q.key).label;
+    el.classList.add(ok ? "ok" : "bad");
+    el.querySelector(".m-why").innerHTML = `<b>${ok ? "Right:"
+      : `Answer: ${label}.`}</b> ${GENERIC[q.key](rd.s)}`;
+  }
+  const check = document.getElementById("g-check");
+  check.hidden = rd.done;
+  check.disabled = rd.links.includes(null);
+  mLines();
+}
+
+/** S-curve from a to b, leaving and entering horizontally. */
+function curve(a, b) {
+  const k = (b.x - a.x) / 2;
+  return `M${a.x},${a.y} C${a.x + k},${a.y} ${b.x - k},${b.y} ${b.x},${b.y}`;
+}
+
+/**
+ * Redraw the lines between dot centers (in the match box's pixels), and
+ * the line being dragged to the pointer of event e. A question being
+ * redrawn hides its old line.
+ */
+function mLines(e) {
+  const rd = G.rounds.match, box = gEls["g-body"].querySelector(".match");
+  if (!rd || !box || G.built !== rd) return;
+  const svg = box.querySelector(".m-lines"), B = box.getBoundingClientRect();
+  const dots = side => [...box.querySelectorAll(`.m-item.${side} .m-dot`)]
+    .map(el => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2 - B.left,
+        y: r.top + r.height / 2 - B.top };
+    });
+  const at = { q: dots("q"), m: dots("m") }, d = G.drag;
+  svg.replaceChildren();
+  rd.links.forEach((j, i) => {
+    if (j === null || (d && d.moved && d.side === "q" && d.i === i)) return;
+    const cls = rd.done ? (rd.ms[j].key === rd.qs[i].key ? " yes" : " no")
+      : "";
+    const path = curve(at.q[i], at.m[j]);
+    node("path", { d: path, class: `m-line${cls}` }, svg);
+    for (const p of [at.q[i], at.m[j]]) {
+      node("circle", { cx: p.x, cy: p.y, r: 5, class: `m-end${cls}` }, svg);
+    }
+    if (!rd.done) node("path", { d: path, class: "m-hit", "data-i": i }, svg);
+  });
+  if (e && d && d.moved) {
+    node("path", { d: curve(at[d.side][d.i], { x: e.clientX - B.left,
+      y: e.clientY - B.top }), class: "m-line rubber" }, svg);
+  }
+}
+
+function mCheck() {
+  const rd = G.rounds.match;
+  if (rd.done || rd.links.includes(null)) return false;
+  rd.done = true;
+  rd.sel = null;
+  score(rd.links.filter((j, i) => rd.ms[j].key === rd.qs[i].key).length,
+    rd.qs.length);
+  gDraw();
+  return true;
+}
+
+// ------------------------------------------------------------- New prior
+
+// Why each answer holds, for round rd.
+const SHIFT_WHY = {
+  tpr: rd => `TPR is a share of the ${rd.s.pos} only, so the prior does `
+    + "not move it.",
+  fpr: rd => `FPR is a share of the ${rd.s.neg} only, so the prior does `
+    + "not move it.",
+  ppv: rd => {
+    const up = rd.p[1] > rd.p[0];
+    return "Precision weighs true alarms (prior × TPR) against false ones "
+      + `((1 − prior) × FPR); ${up ? "more" : "fewer"} ${rd.s.pos} tip it `
+      + `toward ${up ? "true" : "false"} alarms.`;
+  },
+  acc: rd => {
+    const up = rd.p[1] > rd.p[0], s = rd.s;
+    return `Accuracy is TPR (${pctR(rd.tpr)}) on the ${s.pos} and TNR `
+      + `(${pctR(1 - rd.fpr)}) on the ${s.neg}, weighted by their share; `
+      + `the ${up ? s.pos : s.neg} now make up more, so it moves toward `
+      + `${up ? "TPR" : "TNR"}.`;
+  },
+};
+
+function sDraw(rd) {
+  const s = rd.s;
+  const rows = SHIFT_KEYS.map(k => {
+    const a = rd.picks[k], ok = a === rd.ans[k];
+    const seg = MOVES.map(x => `<button role="radio" data-k="${k}"
+      data-a="${x}" aria-checked="${a === x}"${rd.done ? " disabled" : ""}
+      >${cap(x)}</button>`).join("");
+    const out = rd.done ? `<p class="s-out"><b class="${ok ? "ok" : "bad"}">${
+      ok ? "Right" : `Answer: ${cap(rd.ans[k])}`}.</b> ${pct(rd.v[0][k])}
+      &rarr; ${pct(rd.v[1][k])}. ${SHIFT_WHY[k](rd)}</p>` : "";
+    return `<div class="s-row"><span class="mname" data-explain="${k}">${
+      METRIC[k].name}</span><div class="seg" role="radiogroup"
+      aria-label="${METRIC[k].name}">${seg}</div>${out}</div>`;
+  }).join("");
+  const figs = rd.done ? `<div class="s-mosaics">${[0, 1].map(i => `
+    <figure data-ctx="shift${i}"><svg class="mini-mosaic"
+      viewBox="0 0 220 150"></svg><figcaption>${i ? "Second" : "First"}
+      ${s.place}: prior ${pctR(rd.p[i])}</figcaption></figure>`).join("")}
+    </div>` : "";
+  gEls["g-body"].innerHTML = `
+    <h2>${s.title}</h2>
+    <p>${cap(s.test)} has TPR <b>${pctR(rd.tpr)}</b> and FPR
+      <b>${pctR(rd.fpr)}</b>. It moves from one ${s.place} to another: at
+      the first, <b>${pctR(rd.p[0])}</b> of ${s.pop} ${s.has1}; at the
+      second, <b>${pctR(rd.p[1])}</b>.</p>
+    <p class="wyr">At the second ${s.place}, what happens to each
+      number?</p>
+    <div class="s-rows" data-ctx="cheat">${rows}</div>
+    ${rd.done ? "" : `<div class="buttons"><button id="g-check"${
+      SHIFT_KEYS.every(k => rd.picks[k]) ? "" : " disabled"}>Check</button>
+      </div>`}
+    ${figs}`;
+  for (const b of gEls["g-body"].querySelectorAll(".s-row button")) {
+    b.onclick = () => {
+      rd.picks[b.dataset.k] = b.dataset.a;
+      gDraw();
+    };
+  }
+  const check = document.getElementById("g-check");
+  if (check) check.onclick = sCheck;
+  gEls["g-body"].querySelectorAll(".s-mosaics svg").forEach((svg, i) => {
+    drawMosaic(svg, rd.c[i], { x0: 4, x1: 216, y0: 4, y1: 146 },
+      { labels: true });
+  });
+}
+
+function sCheck() {
+  const rd = G.rounds.shift;
+  if (rd.done || !SHIFT_KEYS.every(k => rd.picks[k])) return false;
+  rd.done = true;
+  score(SHIFT_KEYS.filter(k => rd.picks[k] === rd.ans[k]).length,
+    SHIFT_KEYS.length);
+  gDraw();
+  return true;
+}
+
+// ------------------------------------------------------ Would you rather?
+
+function wDraw(rd) {
+  const s = rd.s;
+  gEls["g-body"].innerHTML = `
+    <h2>${s.title}</h2>
+    <p>${num(rd.N)} ${s.pop}, prior ${pctR(rd.prev)}: <b>${num(rd.P)}</b>
+      are ${s.pos} and <b>${num(rd.Q)}</b> are ${s.neg}.</p>
+    <p class="goal"><b>Goal:</b> make the fewest mistakes overall (highest
+      accuracy).</p>
+    <p class="wyr">Would you rather use&hellip;</p>
+    <div class="options"></div>`;
+  gEls["g-body"].querySelector(".options")
+    .replaceChildren(...rd.opts.map((o, i) => wCard(rd, o, i)));
+}
+
+function wCard(rd, o, i) {
+  const card = document.createElement("div");
+  card.className = "option card" + (rd.done ? (i === rd.win ? " win"
+    : " lose") : "") + (rd.picked === i ? " picked" : "");
+  card.dataset.ctx = `game${i}`;
+  card.innerHTML = `<h3>Classifier ${"AB"[i]}</h3>` + ["tpr", "fpr"]
+    .map(k => `<div class="clue" data-explain="${k}"><span class="cname">${
+      rd.names[k]}</span><span class="cval">${pctR(o[k])}</span></div>`)
+    .join("");
+  if (!rd.done) {
+    const b = document.createElement("button");
+    b.className = "choose";
+    b.textContent = `Choose ${"AB"[i]}`;
+    b.onclick = () => wChoose(i);
+    card.append(b);
+    return card;
+  }
+  const c = o.c;
+  card.insertAdjacentHTML("beforeend", `<div class="reveal">
+    <p>Misses: ${pctR(1 - o.tpr)} of ${num(rd.P)} = <b>${num(c.fn)}</b></p>
+    <p>False alarms: ${pctR(o.fpr)} of ${num(rd.Q)} =
+      <b>${num(c.fp)}</b></p>
+    <p class="goalval">${num(c.fn + c.fp)} mistakes (accuracy
+      ${pct(metricValue("acc", c))})</p></div>`);
+  const svg = node("svg", { viewBox: "0 0 220 150", class: "mini-mosaic" },
+    card.querySelector(".reveal"));
+  drawMosaic(svg, c, { x0: 4, x1: 216, y0: 4, y1: 146 }, { labels: true });
+  return card;
+}
+
+/** Why the prior decided the round, and who would win at 50%. */
+function wWhy(rd) {
+  const s = rd.s, W = "AB"[rd.win], L = "AB"[1 - rd.win];
+  const h = rd.h.map(x => num(x * rd.N));
+  const big = rd.Q > rd.P
+    ? `The ${num(rd.Q)} ${s.neg} outnumber the ${num(rd.P)} ${s.pos}, so `
+      + `false alarms weigh more than misses, and ${W} has the lower FPR.`
+    : `The ${num(rd.P)} ${s.pos} outnumber the ${num(rd.Q)} ${s.neg}, so `
+      + `misses weigh more than false alarms, and ${W} has the higher TPR.`;
+  return `${big} At a 50% prior, ${L} would win: ${h[1 - rd.win]} mistakes `
+    + `to ${h[rd.win]} per ${num(rd.N)}.`;
+}
+
+function wChoose(i) {
+  const rd = G.rounds.wyr;
+  if (rd.done) return;
+  rd.picked = i;
+  rd.done = true;
+  score(i === rd.win ? 1 : 0, 1);
+  gDraw();
+}
+
+const DRAW = { shift: sDraw, wyr: wDraw };
+const CHECK = { match: mCheck, shift: sCheck, wyr: () => false };
+
+/**
+ * Keys: 1, 2, 3 pick the kind; a or b choose; Enter checks or, once
+ * done, goes on (n too). Enter on a focused button is left to it.
+ */
 function gKey(e) {
-  const rd = G.round;
-  if (rd.picked === null && (e.key === "a" || e.key === "b")) {
-    choose(e.key === "a" ? 0 : 1);
-  } else if (rd.picked !== null && (e.key === "Enter" || e.key === "n")) {
+  const rd = gRound();
+  if (["1", "2", "3"].includes(e.key)) {
+    setKind(KINDS[Number(e.key) - 1]);
+  } else if (rd.kind === "wyr" && !rd.done
+    && (e.key === "a" || e.key === "b")) {
+    wChoose(e.key === "a" ? 0 : 1);
+  } else if (e.key === "n" && rd.done) {
     newRound();
+  } else if (e.key === "Enter" && e.target.tagName !== "BUTTON") {
+    if (rd.done) newRound();
+    else return CHECK[rd.kind]();
   } else {
     return false;
   }
