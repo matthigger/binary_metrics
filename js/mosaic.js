@@ -14,12 +14,16 @@ function highlightOf(key) {
   return { num: m.num, den: m.den };
 }
 
-/** Highlight class of cell k: "num", "den", "dim" or "" (no highlight). */
+/**
+ * Highlight class of cell k: "num", "den", "dim" or "" (no highlight),
+ * plus "grey" when hl.grey asks for numerator and denominator in greys.
+ */
 function cellState(k, hl) {
   if (!hl) return "";
-  if (hl.num.includes(k)) return "num";
-  if (hl.den.includes(k)) return "den";
-  return "dim";
+  const g = hl.grey ? " grey" : "";
+  if (hl.num.includes(k)) return "num" + g;
+  if (hl.den.includes(k)) return "den" + g;
+  return "dim" + g;
 }
 
 /**

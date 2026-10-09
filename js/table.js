@@ -86,7 +86,10 @@ function tCtx() {
 /** Highlight in force: the hovered cell, else the hovered metric. */
 function tHighlight() {
   if (T.hoverCell) return { num: [T.hoverCell], den: [] };
-  return highlightOf(T.hoverMetric);
+  // A metric shows its fraction in greys: numerator dark, the rest of the
+  // denominator light.
+  const h = highlightOf(T.hoverMetric);
+  return h && { ...h, grey: true };
 }
 
 // ------------------------------------------------------------------ build
