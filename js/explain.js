@@ -1,24 +1,22 @@
 // Hover to explain in plain English. An element with data-tip shows that
 // text as is. One with data-explain (a metric key, a cell key, "auc" or
-// "flag") or data-cell gets a tooltip sentence; the nearest ancestor's data-ctx names the context, a function
-// in EXPLAIN returning { c?, n, who, auc? }: the counts (absent for a
+// "flag") or data-cell gets a tooltip sentence; the nearest ancestor's
+// data-ctx names the context, a function in EXPLAIN returning
+// { c?, n, who, auc? }: the counts (absent for a
 // generic definition), the nouns { pop, pos, neg, has1, has0 } and the
 // classifier's name.
 
 const EXPLAIN = {};
 
 /**
- * Natural frequency "k of every base": per 100, or per 1,000 (10,000)
- * when that hides a rate near 0% or 100%.
+ * Percentage for a sentence: whole percent, or one decimal (two) when
+ * that would hide a rate near 0% or 100%.
  */
-function freq(v) {
+function share(v) {
   const p = 100 * v;
-  if ((p > 0 && p < 9.5) || (p > 99 && p < 100)) {
-    const k = Math.round(1000 * v), m = Math.min(k, 1000 - k);
-    if (m < 10) return { k: num(Math.round(1e4 * v)), base: "10,000" };
-    return { k: num(k), base: "1,000" };
-  }
-  return { k: num(Math.round(p)), base: "100" };
+  if (p === 0 || p === 100 || (p >= 1 && p <= 99)) return pct(v, 0);
+  if (p >= 0.1 && p <= 99.9) return pct(v, 1);
+  return pct(v, 2);
 }
 
 /** Plain-English sentence for key in context x, or "" if none. */
@@ -30,7 +28,7 @@ function explainText(key, x) {
   if (METRIC[key] && !Number.isFinite(v)) {
     return `Undefined here: its denominator is 0.`;
   }
-  const f = freq(v);
+  const p = share(v);
   const S = {
     tn: () => `True negative (TN): ${who} says negative and is right. `
       + `${num(c.tn)} ${n.neg}.`,
@@ -42,23 +40,21 @@ function explainText(key, x) {
       + `${num(c.tp)} ${n.pos}.`,
     flag: () => `${Who} flags ${num(c.tp + c.fp)} of the `
       + `${num(cellSum(c, CELLS))} ${n.pop} as positive, right or wrong.`,
-    acc: () => `${Who} is right about ${f.k} of every ${f.base} ${n.pop}.`,
-    prev: () => `${f.k} of every ${f.base} ${n.pop} ${has1}, before any `
-      + "test.",
-    tpr: () => `Of every ${f.base} ${n.pos}, ${who} catches about ${f.k}.`,
-    fnr: () => `Of every ${f.base} ${n.pos}, ${who} misses about ${f.k}.`,
-    tnr: () => `Of every ${f.base} ${n.neg}, ${who} correctly clears about `
-      + `${f.k}.`,
-    fpr: () => `Of every ${f.base} ${n.neg}, ${who} wrongly flags about `
-      + `${f.k}: false alarms.`,
-    ppv: () => `Of every ${f.base} that ${who} flags as positive, about `
-      + `${f.k} really ${has1}.`,
-    fdr: () => `Of every ${f.base} that ${who} flags as positive, about `
-      + `${f.k} are false alarms.`,
-    npv: () => `Of every ${f.base} that ${who} clears as negative, about `
-      + `${f.k} really ${has0}.`,
-    for: () => `Of every ${f.base} that ${who} clears as negative, about `
-      + `${f.k} are misses: they ${has1}.`,
+    acc: () => `Of all ${n.pop}, ${who} is right about ${p}.`,
+    prev: () => `Of all ${n.pop}, ${p} ${has1}, whatever ${who} says.`,
+    tpr: () => `Of the ${n.pos}, ${who} catches about ${p}.`,
+    fnr: () => `Of the ${n.pos}, ${who} misses about ${p}.`,
+    tnr: () => `Of the ${n.neg}, ${who} correctly clears about ${p}.`,
+    fpr: () => `Of the ${n.neg}, ${who} wrongly flags about ${p}: false `
+      + "alarms.",
+    ppv: () => `Of those ${who} flags as positive, about ${p} really `
+      + `${has1}.`,
+    fdr: () => `Of those ${who} flags as positive, about ${p} are false `
+      + "alarms.",
+    npv: () => `Of those ${who} clears as negative, about ${p} really `
+      + `${has0}.`,
+    for: () => `Of those ${who} clears as negative, about ${p} are misses: `
+      + `they ${has1}.`,
     bacc: () => `The average of TPR (${pct(metricValue("tpr", c))}) and TNR `
       + `(${pct(metricValue("tnr", c))}): how often ${who} is right on each `
       + "class, each counting equally however rare.",

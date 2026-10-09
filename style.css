@@ -93,16 +93,6 @@ h1 { font-size: 2rem; margin: 0 0 2px; letter-spacing: -0.015em; }
 .side .readout h3 { margin-top: 0; }
 .card h3 i { text-transform: none; letter-spacing: 0; font-size: 1.1em; }
 .card p { margin: 0 0 10px; }
-.formula {
-  font-family: "STIX Two Text", "Cambria", Georgia, serif;
-  font-size: 1.1rem;
-  text-align: center;
-  background: #f6f7fa;
-  border-radius: 10px;
-  padding: 10px;
-  margin: 6px 0 10px;
-}
-.formula b { font-family: system-ui, sans-serif; }
 .implies { margin: 0 .45em; color: var(--muted); }
 .frac {
   display: inline-flex;
@@ -181,7 +171,6 @@ footer a { color: inherit; }
   gap: 8px 32px;
 }
 .intro .card h3, .intro h3 { margin-top: 2px; }
-.intro .formula { margin-bottom: 8px; }
 .goal {
   background: #f3f6ff;
   border-left: 3px solid var(--train-ink);
@@ -204,7 +193,7 @@ footer a { color: inherit; }
   border-radius: 999px;
   padding: 1px 10px;
 }
-.notation i, .formula i { font-family: "STIX Two Text", Georgia, serif; }
+.notation i { font-family: "STIX Two Text", Georgia, serif; }
 
 main { padding-top: 14px; padding-bottom: 24px; }
 .panel {
@@ -220,7 +209,7 @@ main { padding-top: 14px; padding-bottom: 24px; }
 /* The box and Every metric share a row, so they stretch to one height;
    both views fill the same flexible area, so toggling keeps it. */
 .table-panel {
-  grid-template-areas: "stage side" "story .";
+  grid-template-areas: "stage side";
   align-items: stretch;
 }
 .table-panel > .stage {
@@ -230,7 +219,6 @@ main { padding-top: 14px; padding-bottom: 24px; }
 }
 .table-panel > .side { grid-area: side; }
 .table-panel > .side > .card { flex: 1; }
-.table-panel > .story { grid-area: story; align-self: start; }
 .view {
   flex: 1;
   min-height: 360px;
@@ -245,7 +233,6 @@ main { padding-top: 14px; padding-bottom: 24px; }
   width: 100%;
   height: 100%;
 }
-.story { padding: 16px 18px; }
 .stage-controls {
   display: flex;
   flex-wrap: wrap;
@@ -466,10 +453,6 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
 .h-hit { stroke: transparent; stroke-width: 16; }
 .h-grip { fill: #fff; stroke: var(--ink); stroke-width: 2.2; }
 .handle:hover .h-grip { fill: var(--ink); }
-.handle.pulse .h-grip { animation: pulse 1.2s ease-in-out infinite; }
-@keyframes pulse {
-  50% { fill: var(--ink); r: 10px; }
-}
 .row-label, .col-label { text-anchor: middle; }
 .rl-head { fill: var(--ink); font-weight: 750; font-size: 15px; }
 /* Row labels shaded like their row's fill, column labels bordered like
@@ -483,33 +466,6 @@ table.cm.mini td { padding: 3px 8px; font-weight: 600; }
 .rl-noun { fill: var(--ink); font-size: 13.5px; }
 .rl-count { fill: var(--muted); font-size: 13px; }
 
-.story-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.story-head h3 { margin: 0; }
-.story-head .buttons { margin: 0; }
-.story h2 { margin: 8px 0 6px; }
-.story ul { margin: 4px 0 8px; padding-left: 1.1em; }
-.story ul.cells { list-style: none; padding-left: 0; }
-.story ul.cells li { margin: 4px 0; }
-.story .formula { font-size: 1rem; padding: 8px 6px; }
-.compare {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 8px;
-}
-.compare > div {
-  background: #f6f7fa;
-  border-radius: 8px;
-  padding: 6px 8px;
-  font-size: .9rem;
-}
-.compare h4 { margin: 0 0 2px; font-size: .8rem; color: var(--muted); }
 button:disabled { opacity: .4; cursor: default; }
 
 .mlist h4 {
@@ -532,7 +488,6 @@ button:disabled { opacity: .4; cursor: default; }
 .mrow.cheat { grid-template-columns: minmax(0, 1fr) auto; cursor: default; }
 .mrow:hover, .mrow.on { background: #eef1f6; }
 .mrow.on { box-shadow: inset 3px 0 0 var(--ink); }
-.mrow.also { background: #f5f6f9; }
 .mrow.in-num { background: #fef3c7; }
 .mrow.in-den { background: #fffbeb; }
 .mname { font-weight: 650; line-height: 1.2; }
@@ -801,7 +756,7 @@ button.m-item.bad { border-color: var(--no-ink); }
 }
 @media (max-width: 1000px) {
   .panel, .intro { grid-template-columns: 1fr; }
-  .table-panel { grid-template-areas: "stage" "story" "side"; }
+  .table-panel { grid-template-areas: "stage" "side"; }
 }
 @media (max-width: 640px) {
   .options { grid-template-columns: 1fr; }

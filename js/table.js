@@ -1,8 +1,7 @@
 // The metrics tab: an editable 2 x 2 table of counts, the same counts
-// as a mosaic with draggable dividers, a guided tour that highlights each
-// metric's numerator (darker) within its denominator (the rest dimmed),
-// and a list of the metrics. "Just the popular ones" (SETTINGS.popular)
-// trims the list and skips the tour steps marked full.
+// as a mosaic with draggable dividers, and a list of the metrics. Resting
+// on a metric darkens its numerator within its denominator and dims the
+// rest. "Just the popular ones" (SETTINGS.popular) trims the list.
 
 const PRESETS = {
   coin: {
@@ -58,111 +57,11 @@ const PRESETS = {
   },
 };
 
-// Tour steps: hl is the metric highlighted, also a second metric sharing
-// its denominator, full marks a step skipped under "Just the popular ones";
-// text(x) is the step's HTML from the context x (x.full: all metrics on).
-const STEPS = [
-  { title: "Four outcomes", hl: null, text: x => `
-    <p>Each of the ${num(x.N)} ${x.n.pop} lands in one cell. The row is
-      the truth; the column is what ${x.n.test} predicts. A cell's name
-      answers two questions:</p>
-    <ul class="names">
-      <li><b>True / False:</b> was the prediction right?</li>
-      <li><b>Positive / Negative:</b> what was predicted?</li>
-    </ul>
-    <ul class="cells">
-      <li>${chip("tn")} ${num(x.c.tn)} ${x.n.neg}, predicted negative</li>
-      <li>${chip("fp")} ${num(x.c.fp)} ${x.n.neg}, predicted positive:
-        a <b>false alarm</b> (type I error)</li>
-      <li>${chip("fn")} ${num(x.c.fn)} ${x.n.pos}, predicted negative:
-        a <b>missed detection</b> (type II error)</li>
-      <li>${chip("tp")} ${num(x.c.tp)} ${x.n.pos}, predicted positive</li>
-    </ul>
-    <p class="muted">Divided by N, the four counts are the joint
-      distribution of (truth, prediction). Edit any of them in the
-      table.</p>` },
-  { title: "Prior", hl: "prev", text: x => `
-    <p>How common is the condition, before any test? ${num(x.n1)} of the
-      ${num(x.N)} ${x.n.has1}.</p>
-    ${formulaHTML("prev", x.c)}
-    <p class="muted">The prior describes the population, not the test.
-      Still, several metrics below depend on it.</p>` },
-  { title: "Accuracy", hl: "acc", text: x => `
-    <p>How often is ${x.n.test} right? It is right for the cells on the
-      diagonal.</p>
-    ${formulaHTML("acc", x.c)}
-    <p class="muted">Careful when the condition is rare: a test that
-      always says negative is right for everyone without it, an accuracy
-      of 1 &minus; prior = ${pct(1 - x.m.prev)}.</p>` },
-  { title: "Out of the Truth 1 row", hl: "tpr", also: "fnr", text: x => `
-    <p>Of the ${num(x.n1)} ${x.n.pos}, ${x.n.test} catches
-      ${num(x.c.tp)}:</p>
-    ${formulaHTML("tpr", x.c)}
-    ${x.full ? `<p>and misses ${num(x.c.fn)}:</p>
-    ${formulaHTML("fnr", x.c)}
-    <p class="muted">The two add to 100%.</p>` : ""}
-    <p class="muted">TPR uses only the Truth 1 row: it says nothing about
-      the ${x.n.neg}.</p>` },
-  { title: "Out of the Truth 0 row", hl: "fpr", also: "tnr", text: x => `
-    <p>Of the ${num(x.n0)} ${x.n.neg}, ${x.n.test} raises a false alarm
-      for ${num(x.c.fp)}:</p>
-    ${formulaHTML("fpr", x.c)}
-    ${x.full ? `<p>and correctly clears ${num(x.c.tn)}:</p>
-    ${formulaHTML("tnr", x.c)}
-    <p class="muted">FPR = 1 &minus; TNR.</p>` : ""}
-    <p class="muted">The ROC curve (next tab) plots TPR against
-      FPR.</p>` },
-  { title: "Out of the Predict 1 column", hl: "ppv", also: "fdr",
-    text: x => `
-    <p>${cap(x.n.test)} says positive for ${num(x.pp)}. How many of them
-      really ${x.n.has1}? ${num(x.c.tp)}:</p>
-    ${formulaHTML("ppv", x.c)}
-    ${x.full ? `<p>The other ${num(x.c.fp)} are false alarms:</p>
-    ${formulaHTML("fdr", x.c)}` : ""}
-    <p class="muted">Precision answers the question asked after a
-      positive result: should I believe it?</p>` },
-  { title: "Out of the Predict 0 column", hl: "npv", also: "for", full: true,
-    text: x => `
-    <p>${cap(x.n.test)} says negative for ${num(x.pn)}. How many of them
-      really ${x.n.has0}? ${num(x.c.tn)}:</p>
-    ${formulaHTML("npv", x.c)}
-    <p>The other ${num(x.c.fn)} are missed:</p>
-    ${formulaHTML("for", x.c)}` },
-  { title: "Rows describe the test; columns depend on the prior",
-    hl: null, rows: true, text: x => `
-    <p>The row ratios use one true class each, so they describe the test
-      itself. The column ratios mix both rows, so they also depend on how
-      common the condition is.</p>
-    <p><b>Drag the line between the rows</b>${T.view !== "mosaic"
-      ? " (switch to the Mosaic view first)" : T.toScale ? ""
-      : " (turn on Rows to scale first)"}: the prior changes, the row
-      ratios stay put and the column ratios move.</p>
-    <div class="compare">
-      <div><h4>Rows</h4>
-        <div>TPR <b>${pct(x.m.tpr)}</b></div>
-        <div>FPR <b>${pct(x.m.fpr)}</b></div></div>
-      <div><h4>Columns</h4>
-        <div>Precision <b>${pct(x.m.ppv)}</b></div>
-        ${x.full ? `<div>NPV <b>${pct(x.m.npv)}</b></div>` : ""}</div>
-      <div><h4>Neither</h4>
-        <div>Prior <b>${pct(x.m.prev)}</b></div>
-        <div>Accuracy <b>${pct(x.m.acc)}</b></div></div>
-    </div>` },
-  { title: "Balanced accuracy", hl: "bacc", full: true, text: x => `
-    <p>The average of the two row ratios that count correct
-      predictions:</p>
-    ${formulaHTML("bacc", x.c)}
-    <p class="muted">Each true class counts equally however rare it is,
-      so a test that always says negative scores 50% (TPR 0%, TNR
-      100%).</p>` },
-];
-
 const MBOX = { x0: 124, x1: 512, y0: 58, y1: 490 };
 
 const T = {
   preset: "heart",
   counts: null,
-  step: 0,
   // Metric key under the pointer in the list, or the hovered cell.
   hoverMetric: null,
   hoverCell: null,
@@ -185,26 +84,17 @@ function tCtx() {
     n0: c.tn + c.fp, n1: c.fn + c.tp, pp: c.fp + c.tp, pn: c.tn + c.fn };
 }
 
-/** Tour steps in force under the toggle. */
-function steps() { return STEPS.filter(s => !s.full || !SETTINGS.popular); }
-
-function stepOf(key) {
-  return steps().findIndex(s => s.hl === key || s.also === key);
-}
-
-/** Highlight in force: hovered cell, else hovered metric, else the step. */
+/** Highlight in force: the hovered cell, else the hovered metric. */
 function tHighlight() {
   if (T.hoverCell) return { num: [T.hoverCell], den: [] };
-  if (T.hoverMetric) return highlightOf(T.hoverMetric);
-  return highlightOf(steps()[T.step].hl);
+  return highlightOf(T.hoverMetric);
 }
 
 // ------------------------------------------------------------------ build
 
 function tBuild() {
-  for (const id of ["presets", "toscale", "cm-table", "mosaic",
-    "story-count", "story-title", "story-body", "story-back",
-    "story-next", "mlist", "t-view", "toscale-row"]) {
+  for (const id of ["presets", "toscale", "cm-table", "mosaic", "mlist",
+    "t-view", "toscale-row"]) {
     tEls[id] = document.getElementById(id);
   }
   for (const [key, p] of Object.entries(PRESETS)) {
@@ -227,8 +117,6 @@ function tBuild() {
       tDraw();
     };
   }
-  tEls["story-back"].onclick = () => setStep(T.step - 1);
-  tEls["story-next"].onclick = () => setStep(T.step + 1);
   buildTable();
   buildList();
   buildMosaicEvents();
@@ -295,16 +183,12 @@ function buildList() {
       T.hoverMetric = null;
       tDraw();
     };
-    row.onclick = () => setStep(stepOf(row.dataset.key));
   }
 }
 
-/** Apply the "Just the popular ones" toggle, staying on the same step. */
+/** Apply the "Just the popular ones" toggle. */
 function tPopular() {
-  const cur = steps()[T.step];
   buildList();
-  const i = steps().indexOf(cur);
-  T.step = i >= 0 ? i : Math.min(T.step, steps().length - 1);
   T.hoverMetric = null;
 }
 
@@ -318,11 +202,6 @@ function hoverCell(k) {
 function setPreset(key) {
   T.preset = key;
   T.counts = { ...PRESETS[key].counts };
-  tDraw();
-}
-
-function setStep(i) {
-  T.step = clamp(i, 0, steps().length - 1);
   tDraw();
 }
 
@@ -342,7 +221,6 @@ function tDraw() {
   tEls["toscale-row"].hidden = !mosaic;
   drawTable(x);
   drawMosaicTab(x);
-  drawStory(x);
   drawList(x);
 }
 
@@ -369,7 +247,7 @@ function drawTable(x) {
 }
 
 function drawMosaicTab(x) {
-  const svg = tEls.mosaic, b = MBOX, step = steps()[T.step];
+  const svg = tEls.mosaic, b = MBOX;
   svg.replaceChildren();
   svg.setAttribute("viewBox", "0 0 540 508");
   // Column labels at the left and right ends, since each row splits at
@@ -402,11 +280,9 @@ function drawMosaicTab(x) {
   });
 
   // Draggable dividers: between the rows (to scale only) and in each row.
-  const pulse = step.rows ? " pulse" : "";
   if (T.toScale) {
     const y = rows[1].y;
-    const g = node("g", { class: `handle row${pulse}`, "data-handle": "row" },
-      svg);
+    const g = node("g", { class: "handle row", "data-handle": "row" }, svg);
     node("line", { x1: b.x0 - 6, x2: b.x1 + 6, y1: y, y2: y,
       class: "h-line" }, g);
     node("line", { x1: b.x0 - 6, x2: b.x1 + 6, y1: y, y2: y,
@@ -427,22 +303,10 @@ function drawMosaicTab(x) {
   });
 }
 
-function drawStory(x) {
-  const s = steps()[T.step];
-  tEls["story-count"].textContent = `Tour ${T.step + 1} / ${steps().length}`;
-  tEls["story-title"].textContent = s.title;
-  tEls["story-body"].innerHTML = s.text(x);
-  tEls["story-back"].disabled = T.step === 0;
-  tEls["story-next"].disabled = T.step === steps().length - 1;
-}
-
 function drawList(x) {
-  const active = T.hoverMetric || steps()[T.step].hl;
-  const also = T.hoverMetric ? null : steps()[T.step].also;
   for (const row of tEls.mlist.querySelectorAll(".mrow")) {
     const k = row.dataset.key, m = METRIC[k];
-    row.classList.toggle("on", k === active);
-    row.classList.toggle("also", k === also);
+    row.classList.toggle("on", k === T.hoverMetric);
     const uses = T.hoverCell && !m.avg;
     row.classList.toggle("in-num", !!uses && m.num.includes(T.hoverCell));
     row.classList.toggle("in-den", !!uses && !m.num.includes(T.hoverCell)
@@ -503,11 +367,4 @@ function buildMosaicEvents() {
   svg.addEventListener("pointerleave", () => {
     if (!T.drag && T.hoverCell) hoverCell(null);
   });
-}
-
-function tKey(e) {
-  if (e.key === "ArrowRight") setStep(T.step + 1);
-  else if (e.key === "ArrowLeft") setStep(T.step - 1);
-  else return false;
-  return true;
 }

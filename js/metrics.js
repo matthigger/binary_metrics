@@ -103,16 +103,3 @@ function defHTML(key) {
   return fracHTML(termsHTML(m.num), termsHTML(m.den));
 }
 
-/** Full formula line: name = definition = counts = value. */
-function formulaHTML(key, c) {
-  const m = METRIC[key], v = metricValue(m, c);
-  let counts;
-  if (m.avg) {
-    const [a, b] = m.avg.map(k => metricValue(k, c));
-    counts = fracHTML(`${pct(a)} + ${pct(b)}`, "2");
-  } else {
-    counts = fracHTML(num(cellSum(c, m.num)), num(cellSum(c, m.den)));
-  }
-  return `<div class="formula"><b>${m.name}</b> = ${defHTML(key)} = ` +
-    `${counts} = <b>${metricText(key, v)}</b></div>`;
-}

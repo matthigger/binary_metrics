@@ -86,22 +86,22 @@ const ASK = {
   tpr: [
     n => `Of all the ${n.pos}, what share does ${n.test} catch?`,
     n => `How likely is ${n.a1} to ${n.to1}?`,
-    n => `Out of every 100 ${n.pos}, how many does ${n.test} get right?`,
+    n => `Among the ${n.pos}, how often is ${n.test} right?`,
   ],
   fnr: [
     n => `Of all the ${n.pos}, what share slips past ${n.test}?`,
     n => `How likely is ${n.a1} to ${n.to0}?`,
-    n => `Out of every 100 ${n.pos}, how many does ${n.test} get wrong?`,
+    n => `Among the ${n.pos}, how often is ${n.test} wrong?`,
   ],
   tnr: [
     n => `Of all the ${n.neg}, what share does ${n.test} correctly clear?`,
     n => `How likely is ${n.a0} to ${n.to0}?`,
-    n => `Out of every 100 ${n.neg}, how many does ${n.test} get right?`,
+    n => `Among the ${n.neg}, how often is ${n.test} right?`,
   ],
   fpr: [
     n => `Of all the ${n.neg}, what share does ${n.test} wrongly flag?`,
     n => `How likely is ${n.a0} to ${n.to1}?`,
-    n => `Out of every 100 ${n.neg}, how many does ${n.test} get wrong?`,
+    n => `Among the ${n.neg}, how often is ${n.test} wrong?`,
   ],
   ppv: [
     n => `Of the ${n.pp}, what share really ${n.has1}?`,

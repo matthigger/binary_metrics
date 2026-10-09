@@ -10,7 +10,7 @@ threshold, is not). Three tabs:
   treadmill heart test (the default), a rapid strep test and a mammogram
   screen. Edit the four counts in the table, or drag the dividers of the mosaic
   beside it (rows = truth, height ∝ class count, split by the prediction, so
-  area ∝ count; the total stays fixed). A tour highlights each metric's
+  area ∝ count; the total stays fixed). Resting on a metric highlights its
   numerator (darker) within its denominator (the rest dimmed). "Just the
   popular ones" (on by default) limits this tab and the game to prior,
   accuracy, TPR, FPR and precision; off, it adds FNR, TNR, FDR, NPV, FOR and
@@ -34,8 +34,8 @@ threshold, is not). Three tabs:
   Reveals show the counts and to-scale mosaics.
 
 Resting the pointer on a metric or cell anywhere shows a plain-English
-sentence with natural frequencies ("of every 100 children with strep, the
-rapid strep test catches about 86").
+sentence naming the group it counts ("of the children with strep, the
+rapid strep test catches about 86%").
 
 Plain HTML/CSS/JS with SVG: no build step and no dependencies.
 

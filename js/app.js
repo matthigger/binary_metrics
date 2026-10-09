@@ -3,7 +3,7 @@
 // roc.js (ROC curve) and game.js (Test yourself).
 
 const MODES = {
-  table: { hash: "#the-metrics", draw: () => tDraw(), key: e => tKey(e) },
+  table: { hash: "#the-metrics", draw: () => tDraw(), key: () => false },
   roc: { hash: "#roc", draw: () => rDraw(), key: e => rKey(e) },
   game: { hash: "#test-yourself", draw: () => gDraw(),
     key: e => gKey(e) },
