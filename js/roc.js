@@ -280,7 +280,8 @@ function drawStrip(c) {
   }
 }
 
-function plotFrame(svg, xl, yl) {
+/** Grid, ticks and axis labels; xk / yk are the labels' hover keys. */
+function plotFrame(svg, xl, yl, xk, yk) {
   svg.replaceChildren();
   svg.setAttribute("viewBox", `0 0 ${PLOT.w} ${PLOT.h}`);
   for (const v of [0, 0.25, 0.5, 0.75, 1]) {
@@ -296,8 +297,9 @@ function plotFrame(svg, xl, yl) {
       "text-anchor": "end" }, svg);
   }
   text(xl, { x: (PLOT.x0 + PLOT.x1) / 2, y: PLOT.h - 12,
-    class: "axis-label", "text-anchor": "middle" }, svg);
+    class: "axis-label", "text-anchor": "middle", "data-explain": xk }, svg);
   text(yl, { x: 0, y: 0, class: "axis-label", "text-anchor": "middle",
+    "data-explain": yk,
     transform: `translate(16 ${(PLOT.y0 + PLOT.y1) / 2}) rotate(-90)` }, svg);
 }
 
@@ -308,7 +310,7 @@ function pathOf(pts) {
 
 function drawRoc(k) {
   const svg = rEls.rocplot;
-  plotFrame(svg, "FPR (false alarm rate)", "TPR (recall)");
+  plotFrame(svg, "FPR (false alarm rate)", "TPR (recall)", "fpr", "tpr");
   node("path", { d: pathOf(verts) + `L${px(1)} ${py(0)}Z`,
     class: "auc-fill" }, svg);
   node("rect", { x: PLOT.x0, y: PLOT.y0, width: PLOT.x1 - PLOT.x0,
@@ -323,7 +325,7 @@ function drawRoc(k) {
   const [x, y] = verts[k];
   node("circle", { cx: px(x), cy: py(y), r: 6.5, class: "cur" }, svg);
   text(`AUC = ${auc.toFixed(3)}`, { x: px(0.97), y: py(0.04),
-    class: "auc-label", "text-anchor": "end" }, svg);
+    class: "auc-label", "text-anchor": "end", "data-explain": "auc" }, svg);
 }
 
 function rReadout(c, k) {

@@ -577,6 +577,10 @@ button:disabled { opacity: .4; cursor: default; }
 }
 .cur { fill: var(--c1); stroke: var(--ink); stroke-width: 2.2; }
 .auc-label { font-weight: 700; font-size: 15px; fill: var(--test-ink); }
+#rocplot [data-explain] {
+  cursor: help;
+  text-decoration: underline dotted #a3abb9;
+}
 .readout table.cm.mini { margin: 0 0 6px; }
 
 /* --------------------------------------------------------- game tab */
