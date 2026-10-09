@@ -135,10 +135,7 @@
       <p class="goal"><b>Goal:</b> rate a classifier with one number that
         does not depend on picking a threshold.</p>
       <p class="goal approach"><b>Approach:</b> a classifier gives each
-        sample a score (<i>c</i>&nbsp;&middot;&nbsp;<i>x</i> for the
-        perceptron or LDA, &sigma;(<i>c</i>&nbsp;&middot;&nbsp;<i>x</i>)
-        for logistic regression) and estimates 1 when score &ge;
-        <i>t</i>. Each threshold <i>t</i> gives one confusion matrix, so
+        sample a score and estimates 1 when score &ge; <i>t</i>. Each threshold <i>t</i> gives one confusion matrix, so
         one point (FPR, TPR). Sweeping <i>t</i> from high to low traces the
         ROC curve; the area under it (AUC) scores every threshold at
         once.</p>
