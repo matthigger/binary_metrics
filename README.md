@@ -8,13 +8,13 @@ threshold, is not). Three tabs:
 
 - **The metrics.** A coin flip (guessing heads or tails: chance accuracy), a
   treadmill heart test (the default), a rapid strep test and a mammogram
-  screen. Edit the four counts in the table, or drag the dividers of the mosaic
-  beside it (rows = truth, height ∝ class count, split by the prediction, so
-  area ∝ count; the total stays fixed). Resting on a metric highlights its
-  numerator (darker) within its denominator (the rest dimmed). "Just the
-  popular ones" (on by default) limits this tab and the game to prior,
-  accuracy, TPR, FPR and precision; off, it adds FNR, TNR, FDR, NPV, FOR and
-  balanced accuracy.
+  screen. Edit the four counts in the table, or drag the dividers of the
+  mosaic beside it (rows = actual class, height ∝ class count, split by the
+  prediction, so area ∝ count; the total stays fixed). Resting on a metric
+  highlights its numerator (darker) within its denominator (the rest dimmed).
+  "Just the popular ones" (on by default) limits this tab and the game to
+  prior, accuracy, TPR, FPR and precision; off, it adds FNR, TNR, FDR, NPV,
+  FOR and balanced accuracy.
 - **ROC curve.** One number that needs no threshold: AUC. Scores of each
   class are drawn from two normals (separation, prior and sample count
   are sliders). Drag the threshold on the score strip, where each dot is

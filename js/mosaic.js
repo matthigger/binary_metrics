@@ -29,7 +29,7 @@ function cellState(k, hl) {
 /**
  * Lay out the mosaic of counts c in box b = { x0, x1, y0, y1 }.
  *
- * Returns rows (Truth 0, Truth 1): { cells, n, y, h, split }, split being
+ * Returns rows (Actual 0, Actual 1): { cells, n, y, h, split }, split being
  * the x of the boundary between the Predict 0 and Predict 1 cells.
  */
 function mosaicLayout(c, b, toScale) {
@@ -146,7 +146,7 @@ function roundedPath(pts, r) {
   return d + "Z";
 }
 
-// Truth (row) and estimate (column) of each cell.
+// Actual class (row) and estimate (column) of each cell.
 const CELL_TE = { tn: [0, 0], fp: [0, 1], fn: [1, 0], tp: [1, 1] };
 
 /**

@@ -1,5 +1,5 @@
-// ROC curve tab. Each sample gets a score; scores of Truth 0 samples are
-// drawn from N(-sep/2, 1) and of Truth 1 samples from N(sep/2, 1). The
+// ROC curve tab. Each sample gets a score; scores of Actual 0 samples are
+// drawn from N(-sep/2, 1) and of Actual 1 samples from N(sep/2, 1). The
 // classifier predicts 1 when score >= threshold t, or, estimating
 // backwards, when score <= t. The strip shows the scores (one band per
 // true class) split by t into the four cells; each dot is filled by its
@@ -28,14 +28,14 @@ const R = {
 };
 
 // From rRegen(): noise streams z[0], z[1]; scores per class sorted high to
-// low (rs[0] Truth 0, rs[1] Truth 1); the same as effective scores (es);
+// low (rs[0] Actual 0, rs[1] Actual 1); the same as effective scores (es);
 // every sample by effective score, high to low (order); the staircase
-// vertices; above[j] = # Truth 1 above the j-th highest Truth 0 (both
+// vertices; above[j] = # Actual 1 above the j-th highest Actual 0 (both
 // effective); and the AUC.
 let rz, rs, es, order, verts, above, auc;
 const rEls = {};
-const ROC_NOUNS = { pop: "all samples", pos: "Truth 1 samples",
-  neg: "Truth 0 samples", has1: "are Truth 1", has0: "are Truth 0" };
+const ROC_NOUNS = { pop: "all samples", pos: "Actual 1 samples",
+  neg: "Actual 0 samples", has1: "are Actual 1", has0: "are Actual 0" };
 
 EXPLAIN.roc = () => ({ c: rCounts(), n: ROC_NOUNS, who: "the classifier",
   auc });
@@ -158,21 +158,21 @@ function py(v) { return PLOT.y1 - v * (PLOT.y1 - PLOT.y0); }
 
 function rDraw() {
   rEls["r-n"].value = R.n;
-  rEls["r-nval"].textContent = `${R.n} (${rs[1].length} Truth 1, `
-    + `${rs[0].length} Truth 0)`;
+  rEls["r-nval"].textContent = `${R.n} (${rs[1].length} Actual 1, `
+    + `${rs[0].length} Actual 0)`;
   rEls["r-prev"].value = R.prev;
   rEls["r-prevval"].textContent = pct(rs[1].length / R.n);
   rEls["r-sep"].value = R.sep;
-  rEls["r-sepval"].textContent = `${fmt(R.sep, 1)} (mean of Truth 1 minus `
-    + `mean of Truth 0)`;
+  rEls["r-sepval"].textContent = `${fmt(R.sep, 1)} (mean of Actual 1 minus `
+    + `mean of Actual 0)`;
   rEls["r-sweep"].textContent = R.sweep ? "■ Stop" : "▶ Sweep";
   rEls["r-flip"].textContent = R.back ? "Undo backwards"
     : "Estimate backwards";
   const [lo, hi] = R.back ? ["&gt;", "&le;"] : ["&lt;", "&ge;"];
   rEls["r-legend"].innerHTML = `
     <span class="key"><b>Fill:</b></span>
-    <span class="key"><span class="dot t0"></span>Truth 0</span>
-    <span class="key"><span class="dot t1"></span>Truth 1</span>
+    <span class="key"><span class="dot t0"></span>Actual 0</span>
+    <span class="key"><span class="dot t1"></span>Actual 1</span>
     <span class="key"><b>Border:</b></span>
     <span class="key"><span class="dot e0"></span>Predict 0
       (score ${lo} <i>t</i>)</span>
@@ -234,7 +234,7 @@ function drawStrip(c) {
     const yc = (b.y0 + b.y1) / 2;
     node("rect", { x: 2, y: yc - 15, width: S.x0 - 8, height: 30, rx: 7,
       class: `rl-box t${i}` }, svg);
-    text(`Truth ${i}`, { x: (S.x0 - 6) / 2, y: yc + 5, class: "band-label",
+    text(`Actual ${i}`, { x: (S.x0 - 6) / 2, y: yc + 5, class: "band-label",
       "text-anchor": "middle" }, svg);
   }
   for (let v = -5; v <= 5; v++) {
@@ -349,8 +349,8 @@ function rReadout(c, k) {
     <table class="cm mini"><thead><tr><th></th>
       <th class="cl e0">Predict 0</th><th class="cl e1">Predict 1</th>
       </tr></thead><tbody>
-      <tr><th class="rl t0">Truth 0</th>${td("tn")}${td("fp")}</tr>
-      <tr><th class="rl t1">Truth 1</th>${td("fn")}${td("tp")}</tr>
+      <tr><th class="rl t0">Actual 0</th>${td("tn")}${td("fp")}</tr>
+      <tr><th class="rl t1">Actual 1</th>${td("fn")}${td("tp")}</tr>
     </tbody></table>`;
   const row = (key, def, val) => {
     const mt = METRIC[key];

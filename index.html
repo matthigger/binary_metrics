@@ -33,15 +33,15 @@
         (a coin flip, a medical test) does, with a number that answers the
         question you care about.</p>
       <p class="goal approach"><b>Approach:</b> count the samples in each
-        of the four cells: truth (row) by prediction (column). Every metric
-        divides some of the cells by a row, a column or the whole
-        table.</p>
+        of the four cells: actual class (row) by prediction (column).
+        Every metric divides some of the cells by a row, a column or the
+        whole table.</p>
     </div>
     <div>
       <h3>Try this</h3>
       <ul class="try">
         <li>Edit the counts in the table to change the prior: move
-          samples from the Truth 0 row to the Truth 1 row. Which metrics
+          samples from the Actual 0 row to the Actual 1 row. Which metrics
           move, and which stay put?</li>
         <li>In the Mosaic view, drag the line between the rows. Which
           metrics move, and which stay put?</li>
@@ -110,8 +110,8 @@
           Why does the curve only ever move up or right?
           <details class="answer"><summary>Answer</summary>Moving the
             threshold left only turns predictions of 0 into 1, never the
-            reverse. A Truth 1 sample now predicted 1 is one more catch, so
-            TPR rises: the curve steps up. A Truth 0 sample now predicted 1
+            reverse. A Actual 1 sample now predicted 1 is one more catch, so
+            TPR rises: the curve steps up. A Actual 0 sample now predicted 1
             is one more false alarm, so FPR rises: the curve steps right.
             Neither rate can ever fall.</details>
         </li>

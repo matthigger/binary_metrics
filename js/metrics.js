@@ -2,8 +2,8 @@
 // truth, columns the prediction, class 0 first, as in the course notes:
 //
 //              Predict 0   Predict 1
-//   Truth 0       TN          FP
-//   Truth 1       FN          TP
+//   Actual 0       TN          FP
+//   Actual 1       FN          TP
 //
 // Counts are an object { tn, fp, fn, tp }. Each ratio metric divides the
 // sum of its num cells by the sum of its den cells.
@@ -13,8 +13,8 @@ const CELL_LABEL = { tn: "TN", fp: "FP", fn: "FN", tp: "TP" };
 
 const GROUPS = [
   { key: "all", title: "Out of everyone" },
-  { key: "t1", title: "Out of the Truth 1 row" },
-  { key: "t0", title: "Out of the Truth 0 row" },
+  { key: "t1", title: "Out of the Actual 1 row" },
+  { key: "t0", title: "Out of the Actual 0 row" },
   { key: "p1", title: "Out of the Predict 1 column" },
   { key: "p0", title: "Out of the Predict 0 column" },
   { key: "avg", title: "Average of the rows" },

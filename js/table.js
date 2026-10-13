@@ -135,10 +135,10 @@ function buildTable() {
       <th class="cl e1">Predict 1<span class="noun" data-noun="p1"></span></th>
       <th class="tot">Total</th></tr></thead>
     <tbody>
-      <tr><th class="rl t0">Truth 0<span class="noun" data-noun="t0"></span>
+      <tr><th class="rl t0">Actual 0<span class="noun" data-noun="t0"></span>
         </th>
         ${cell("tn")}${cell("fp")}<td class="tot" data-tot="n0"></td></tr>
-      <tr><th class="rl t1">Truth 1<span class="noun" data-noun="t1"></span>
+      <tr><th class="rl t1">Actual 1<span class="noun" data-noun="t1"></span>
         </th>
         ${cell("fn")}${cell("tp")}<td class="tot" data-tot="n1"></td></tr>
       <tr class="tot"><th>Total</th><td data-tot="pn"></td>
@@ -301,7 +301,7 @@ function drawMosaicTab(x) {
     const g = node("g", { class: "row-label" }, svg), cx = (b.x0 - 4) / 2;
     node("rect", { x: 2, y: ys[i] - 43, width: b.x0 - 8, height: 86, rx: 8,
       class: `rl-box t${i}${plain}` }, g);
-    text(`Truth ${i}`, { x: cx, y: ys[i] - 16, class: "rl-head" }, g);
+    text(`Actual ${i}`, { x: cx, y: ys[i] - 16, class: "rl-head" }, g);
     text(x.n[`t${i}`], { x: cx, y: ys[i] + 7, class: "rl-noun" }, g);
     text(`${num(r.n)} (${x.N ? pct(r.n / x.N) : "–"})`,
       { x: cx, y: ys[i] + 29, class: "rl-count" }, g);
